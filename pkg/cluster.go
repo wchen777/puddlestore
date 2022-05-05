@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	tapestry "tapestry/pkg"
 	"time"
 )
 
@@ -32,5 +33,27 @@ func CreateCluster(config Config) (*Cluster, error) {
 	// TODO: Start your tapestry cluster with size config.NumTapestry. You should
 	// also use the zkAddr (zookeeper address) found in the config and pass it to
 	// your Tapestry constructor method
-	return nil, nil
+
+	// create random set of tapestries of count config.NumTapestry
+	randNodes, err := tapestry.MakeRandomTapestries(4444, config.NumTapestry)
+
+	var nodes []*Tapestry
+
+	// iterate through newly created nodes to create Tapestry Nodes for *Cluster
+	for i := 0; i < config.NumTapestry; i += 1 {
+
+		nodeToAdd, err := NewTapestry(randNodes[i], config.ZkAddr)
+
+		if err != nil {
+			return nil, err
+		}
+
+		nodes = append(nodes, nodeToAdd)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &Cluster{config: config, nodes: nodes}, nil
 }

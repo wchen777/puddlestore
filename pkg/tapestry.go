@@ -15,8 +15,15 @@ type Tapestry struct {
 
 // NewTapestry creates a new tapestry struct
 func NewTapestry(tap *tapestry.Node, zkAddr string) (*Tapestry, error) {
-	//  TODO: Setup a zookeeper connection and return a Tapestry struct
-	return nil, nil
+	//  create new zkConn.
+	zkConn, err := ConnectZk(zkAddr)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// returns back tapestry node with zkConn in struct.
+	return &Tapestry{tap: tap, zk: zkConn}, nil
 }
 
 // GracefulExit closes the zookeeper connection and gracefully shuts down the tapestry node

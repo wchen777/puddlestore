@@ -19,4 +19,4 @@ require (
 )
 
 // Replace this
-replace tapestry => tapestry // /path/to/your/tapestry/implementation/root/folder
+replace tapestry => ./tapestry // /path/to/your/tapestry/implementation/root/folder
