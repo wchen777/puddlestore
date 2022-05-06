@@ -24,7 +24,20 @@ func (c *Cluster) Shutdown() {
 // NewClient creates a new Puddlestore client
 func (c *Cluster) NewClient() (Client, error) {
 	// TODO: Return a new PuddleStore Client that implements the Client interface
-	return nil, nil
+
+	// try and establish a new connection
+	conn, err := ConnectZk(c.config.ZkAddr)
+
+	if err != nil {
+		return nil, err
+	}
+
+	client := &PuddleClient{
+		ID:     "", // TODO: what should we do for ID?
+		zkConn: conn,
+	}
+
+	return client, nil
 }
 
 // CreateCluster starts all nodes necessary for puddlestore
@@ -57,3 +70,11 @@ func CreateCluster(config Config) (*Cluster, error) {
 
 	return &Cluster{config: config, nodes: nodes}, nil
 }
+
+// RANDOM IDEAS:
+
+// IMPLEMENT LOAD BALANCING SO ZKCONN IS ASSIGNED TO A DIFF TAP NODE?
+
+// IDEAS:
+// - generate new uuid for client
+// - use consistent hashing to assign client to tapestry node using uuid
