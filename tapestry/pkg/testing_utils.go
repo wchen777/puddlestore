@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"fmt"
-	"rand"
+	"math/rand"
 	"strconv"
 	"sync"
 	"time"
