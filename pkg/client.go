@@ -48,9 +48,15 @@ type Client interface {
 
 // TODO: implement the Client interface
 type PuddleClient struct {
-	ID     string
-	zkConn *zk.Conn
+	ID        string
+	zkConn    *zk.Conn
+	openFiles map[int]inode // map from file descriptor to inode
+	// lock states field here, best way to store read and write locks associated with an inode?
+	fsPath    string // file system path prefix within zookeeper
+	locksPath string // locks path prefix within zookeeper system
 }
+
+// ---------------------- CLIENT INTERFACE IMPLEMENTATION ---------------------- //
 
 // open a file and return a file descriptor
 func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
@@ -64,11 +70,14 @@ func (c *PuddleClient) Close(fd int) error {
 
 // read a file and return a buffer of size `size` starting at `offset`
 func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
+
+	// TODO: for offsets, create a helper function to get the correct data blocks from offset
 	return nil, nil
 }
 
 // write a file and write `data` starting at `offset`
 func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
+
 	return nil
 }
 
@@ -90,4 +99,39 @@ func (c *PuddleClient) List(path string) ([]string, error) {
 // release zk connection
 func (c *PuddleClient) Exit() {
 	c.zkConn.Close()
+}
+
+// -------------------------- UTILITY/HELPER FUNCTIONS -------------------------- //
+
+// initializes the zookeeper internal file system and locks directory paths
+func (c *PuddleClient) initPaths() error {
+
+	// fs path exists
+	fsExists, _, err := c.zkConn.Exists(c.fsPath)
+	if err != nil {
+		return err
+	}
+
+	// if fs path does not exist, create it
+	if !fsExists {
+		_, err = c.zkConn.Create(c.fsPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
+		if err != nil {
+			return err
+		}
+	}
+
+	// repeat for locks root
+	locksExists, _, err := c.zkConn.Exists(c.locksPath)
+	if err != nil {
+		return err
+	}
+
+	if !locksExists {
+		_, err = c.zkConn.Create(c.locksPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

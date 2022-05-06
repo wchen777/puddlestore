@@ -12,14 +12,8 @@ type Cluster struct {
 	nodes  []*Tapestry
 }
 
-// Shutdown causes all tapestry nodes to gracefully exit
-func (c *Cluster) Shutdown() {
-	for _, node := range c.nodes {
-		node.GracefulExit()
-	}
-
-	time.Sleep(time.Second)
-}
+const LOCK_ROOT = "/locks"
+const FS_ROOT = "/puddlestore"
 
 // NewClient creates a new Puddlestore client
 func (c *Cluster) NewClient() (Client, error) {
@@ -33,8 +27,16 @@ func (c *Cluster) NewClient() (Client, error) {
 	}
 
 	client := &PuddleClient{
-		ID:     "", // TODO: what should we do for ID?
-		zkConn: conn,
+		ID:        "", // TODO: what should we do for ID?
+		zkConn:    conn,
+		fsPath:    FS_ROOT,
+		locksPath: LOCK_ROOT,
+	}
+
+	err = client.initPaths()
+
+	if err != nil {
+		return nil, err
 	}
 
 	return client, nil
@@ -69,6 +71,15 @@ func CreateCluster(config Config) (*Cluster, error) {
 	}
 
 	return &Cluster{config: config, nodes: nodes}, nil
+}
+
+// Shutdown causes all tapestry nodes to gracefully exit
+func (c *Cluster) Shutdown() {
+	for _, node := range c.nodes {
+		node.GracefulExit()
+	}
+
+	time.Sleep(time.Second)
 }
 
 // RANDOM IDEAS:
