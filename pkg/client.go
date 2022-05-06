@@ -1,7 +1,10 @@
 package pkg
 
 import (
+	"errors"
+
 	"github.com/go-zookeeper/zk"
+	uuid "github.com/google/uuid"
 )
 
 // Client is a puddlestore client interface that will communicate with puddlestore nodes
@@ -47,24 +50,124 @@ type Client interface {
 }
 
 // TODO: implement the Client interface
+
+type OpenFile struct {
+	INode *inode
+	Data  []byte // cached file block data, TODO: how do we get all the data in one place from tapestry blocks ?
+}
+
 type PuddleClient struct {
 	ID        string
 	zkConn    *zk.Conn
-	openFiles map[int]inode // map from file descriptor to inode
+	openFiles []*OpenFile // map from file descriptor to inode, represented as an array of inodes (each fd is an index in the array)
+
 	// lock states field here, best way to store read and write locks associated with an inode?
-	fsPath    string // file system path prefix within zookeeper
-	locksPath string // locks path prefix within zookeeper system
+
+	fsPath       string // file system path prefix within zookeeper, e.g. /puddlestore
+	locksPath    string // locks path prefix within zookeeper system, e.g. /locks
+	tapestryPath string // path root for tapestry nodes assigned to each client, e.g. /tapestry
+
+	dirtyFiles map[int]bool // dirty files set ? for flushing, should contain file descriptors (or file paths)?
+
 }
 
 // ---------------------- CLIENT INTERFACE IMPLEMENTATION ---------------------- //
 
-// open a file and return a file descriptor
+// open a file and return a file descriptor, DOES THIS PATH START WITH A /?
 func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
-	return 0, nil
+
+	// search for the file path metadata in zookeeper
+	fileExists, _, err := c.zkConn.Exists(c.fsPath + "/" + path)
+
+	if err != nil {
+		return -1, err
+	}
+
+	var newFileinode *inode
+
+	if !fileExists { // if the file metadata does not exist in the zookeeper fs
+
+		if !create { // if we are not creating and the file does not exist, return error
+			return -1, zk.ErrNoNode
+		} else { // otherwise create the file
+
+			// create the inode
+			newFileinode = &inode{
+				Filepath: path,                 // this is the path of the file in the actual filesystem
+				Size:     0,                    // this is the size of the file in bytes (starts as empty)
+				Blocks:   make([]uuid.UUID, 0), // this is the list of data blocks (each block is a uuid that represents an entry in tapestry)
+			}
+
+			// marshal the inode to bytes
+			inodeBuffer, err := encodeInode(*newFileinode)
+
+			if err != nil { // encode fails
+				return -1, err
+			}
+
+			// create the file metadata in zookeeper, should be neither sequential nor ephemeral
+			c.zkConn.Create(c.fsPath+"/"+path, inodeBuffer, 0, zk.WorldACL(zk.PermAll))
+
+		}
+
+	} else {
+
+		// get the inode from zookeeper
+		data, _, err := c.zkConn.Get(c.fsPath + "/" + path)
+
+		if err != nil {
+			return -1, err
+		}
+
+		// unmarshal the inode
+		newFileinode, err = decodeInode(data)
+		if err != nil {
+			return -1, err
+		}
+
+	}
+
+	// get next client file descriptor
+	fd := c.findNextFreeFD()
+
+	if fd == -1 { // if there are no free file descriptors, return error
+		return -1, errors.New("no free file descriptors, ENOMEM")
+	}
+
+	// add the file to the open files list
+	c.openFiles[fd] = &OpenFile{
+		INode: newFileinode,
+		Data:  make([]byte, 0),
+	}
+
+	// if we have specified write, add fd to dirty files (to be flushed on close)
+	if write {
+		c.dirtyFiles[fd] = true
+	}
+
+	return fd, nil
+
 }
 
 // close a file and flush its contents to the distributed filesystem
 func (c *PuddleClient) Close(fd int) error {
+
+	// check dirty files set
+	if c.dirtyFiles[fd] {
+		// flush the file
+
+		// get the inode from the open files list
+		file := c.openFiles[fd]
+
+		// flush the data blocks that we've written to
+
+		// need to contact tapestry, copy on write!!
+		// remember to modify the inode in zk to reflect the new data blocks
+
+		// remove the file from the dirty files set
+		delete(c.dirtyFiles, fd)
+	}
+
 	return nil
 }
 
@@ -78,6 +181,7 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 // write a file and write `data` starting at `offset`
 func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 
+	// remember to modify the inode data stored locally on each write, flush to zookeeper on close
 	return nil
 }
 
@@ -133,5 +237,37 @@ func (c *PuddleClient) initPaths() error {
 		}
 	}
 
+	// repeat for tapestry root
+	tapestryExists, _, err := c.zkConn.Exists(c.tapestryPath)
+	if err != nil {
+		return err
+	}
+
+	if !tapestryExists {
+		_, err = c.zkConn.Create(c.tapestryPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func (c *PuddleClient) findNextFreeFD() int {
+
+	// look through the open files array, find first empty index
+	for i, f := range c.openFiles {
+		if f == nil {
+			return i
+		}
+	}
+
+	// if no empty index return -1 (MAX OPEN FILES IS 256, SHOULD WE HAVE A LIMIT? TODO: ask about this)
+	return -1
+
+}
+
+// helper function to return the tap addr from a client node, eg /tapestry/CLIENTUUID
+func (c *PuddleClient) getFullTapestryAddrPath() string {
+	return c.tapestryPath + "/" + c.ID
 }

@@ -3,6 +3,9 @@ package pkg
 import (
 	tapestry "tapestry/pkg"
 	"time"
+
+	"github.com/go-zookeeper/zk"
+	uuid "github.com/google/uuid"
 )
 
 // Cluster is an interface for all nodes in a puddlestore cluster. One should be able to shutdown
@@ -14,6 +17,15 @@ type Cluster struct {
 
 const LOCK_ROOT = "/locks"
 const FS_ROOT = "/puddlestore"
+const TAP_ADDRESS_ROOT = "/tapestry"
+
+const CLIENT_OPEN_FILES_LIMIT = 256
+
+// TODO: HASHING FUNCTION FOR LOAD BALANCING, consistent hashing, round robin, etc.
+func (c *Cluster) HashClientIDToTapNode(clientID string) *Tapestry {
+
+	return c.nodes[0] // PLACEHOLDER
+}
 
 // NewClient creates a new Puddlestore client
 func (c *Cluster) NewClient() (Client, error) {
@@ -26,14 +38,36 @@ func (c *Cluster) NewClient() (Client, error) {
 		return nil, err
 	}
 
+	clientID := uuid.New()
+
 	client := &PuddleClient{
-		ID:        "", // TODO: what should we do for ID?
-		zkConn:    conn,
-		fsPath:    FS_ROOT,
-		locksPath: LOCK_ROOT,
+		ID:           clientID.String(),
+		zkConn:       conn,
+		fsPath:       FS_ROOT,
+		locksPath:    LOCK_ROOT,
+		tapestryPath: TAP_ADDRESS_ROOT,
+
+		openFiles: make([]*OpenFile, 256),
 	}
 
+	// init paths for all zk roots, if they do not exist
 	err = client.initPaths()
+
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: WHAT SHOULD WE STORE IN ZK, JUST THE TAP ADDR OR THE WHOLE TAP NODE OBJECT?
+	assignedTapNode := c.HashClientIDToTapNode(client.ID)    // use load balancing to assign client to tapestry node
+	tapNodeMarshalled, err := encodeMsgPack(assignedTapNode) // marshal tapestry node to be stored in zk
+
+	if err != nil {
+		return nil, err
+	}
+
+	// use the zk conn to create a new sequential + ephemeral node to represent the client
+	// the data stored at this znode to hold the assigned tapestry address (RN IT IS WHOLE TAP NODE OBJ)
+	_, err = client.zkConn.Create(client.tapestryPath+"/"+client.ID, tapNodeMarshalled.Bytes(), zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 
 	if err != nil {
 		return nil, err
