@@ -3,6 +3,8 @@ package pkg
 import (
 	"errors"
 
+	dist_lock "dist_lock"
+
 	"github.com/go-zookeeper/zk"
 	uuid "github.com/google/uuid"
 )
@@ -196,12 +198,47 @@ func (c *PuddleClient) Mkdir(path string) error {
 
 // remove a directory or file
 func (c *PuddleClient) Remove(path string) error {
+	// search for path in zookeeper
+	exists, _, err := c.zkConn.Exists(c.fsPath + "/" + path)
+
+	// TODO: check if file/dir
+	// ed explains how to handle both cases.
+	if err != nil {
+		return err
+	}
+
+	if exists {
+
+		// acquire lock for this path
+		// todo: do we have to create lock everytime we want to use it? can we optimize?
+		distLock := dist_lock.CreateDistLock(path, c.zkConn)
+
+		distLock.Acquire()
+
+		c.zkConn.Delete(path, -1)
+
+		distLock.Release()
+	} else {
+		return err
+	}
+
 	return nil
 }
 
 // list file & directory names (not full names) under `path`
 func (c *PuddleClient) List(path string) ([]string, error) {
-	return nil, nil
+	// search for path in zookeeper
+	exists, _, err := c.zkConn.Exists(c.fsPath + "/" + path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if exists {
+
+	} else {
+		return nil, err
+	}
 }
 
 // release zk connection

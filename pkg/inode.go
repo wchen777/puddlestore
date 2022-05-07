@@ -16,6 +16,7 @@ type inode struct {
 	Filepath string // this is the filepath with respect to the actual file system (not the zookeeper file system)
 	Size     uint64
 	Blocks   []uuid.UUID
+	IsDir    bool // determines if inode is a directory or file.
 }
 
 // returns the path of the file
