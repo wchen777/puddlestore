@@ -6,6 +6,10 @@ import (
 
 	// "sort"
 
+	"fmt"
+	"sort"
+	"strings"
+
 	"github.com/go-zookeeper/zk"
 )
 
@@ -46,9 +50,11 @@ When a client with a lock crashes, it will be unable to release the lock,
 the system must be able to detect the failure and reclaim the locks. TODO: this.
 */
 
+const lockPrefix = "/locks-"
+
 type DistLock struct {
 	zkConn   *zk.Conn
-	lockRoot string // e.g. /locks
+	lockRoot string // e.g. /a
 	path     string // full zk path of the lock
 
 }
@@ -61,6 +67,82 @@ func CreateDistLock(root string, zkConn *zk.Conn) *DistLock {
 		zkConn:   zkConn,
 	}
 	return dlock
+}
+
+// NORMAL LOCK IMPLEMENTATION:
+func (d *DistLock) Acquire() (err error) {
+
+	// 1. call create
+	// locks /dir/lock-
+	path, err := d.zkConn.Create(d.lockRoot+lockPrefix, []byte(""), zk.FlagSequence|zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
+
+	fmt.Println("path: ", path)
+
+	if err != nil {
+		return err
+	}
+
+	// update path field of distlock
+	d.path = path
+
+	for {
+
+		// call children on lock node without watch flag
+		// puddlestore concern:
+		// children on \a with dir \a\b will give us:
+		// \a\lock-..., as well as \a\b elements...
+		unfiltChil, _, err := d.zkConn.Children(d.lockRoot)
+
+		// filter non lock children
+		var chil []string
+
+		for _, s := range unfiltChil {
+
+			// if lock root AND has lock prefix, add to new list
+			// ignore children that are NOT locks of root dir(root + \lock-).
+			if strings.HasPrefix(s, (d.lockRoot + lockPrefix)) {
+				chil = append(chil, s)
+			}
+		}
+
+		if err != nil {
+			return err
+		}
+
+		// sort children array by string comparison
+		sort.Strings(chil)
+
+		// if pathname in step 1 has lowest squence number suffix, client has lock and should exit protocol
+		if len(chil) <= 1 || strings.HasSuffix(d.path, chil[0]) {
+			// client has lock and should exit protocol
+			return nil
+		}
+
+		// call exists with watch flag on path in lock directory with next lowest sequence number
+		// get index of path suffix in children array
+
+		index := sort.SearchStrings(chil, path[len(d.lockRoot)+1:])
+
+		exists, _, eventChan, err := d.zkConn.ExistsW(d.lockRoot + "/" + chil[index-1])
+
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			// wait for notification for pathname from previous step
+
+			<-eventChan
+		}
+
+	}
+
+}
+
+// The unlock protocol is very simple: clients wishing to release a lock simply delete the node they created in step 1.
+func (d *DistLock) Release() (err error) {
+
+	return d.zkConn.Delete(d.path, -1)
 }
 
 // grab a read lock
