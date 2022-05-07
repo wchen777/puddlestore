@@ -210,13 +210,49 @@ func (c *PuddleClient) Remove(path string) error {
 
 		// acquire lock for this path
 		// todo: do we have to create lock everytime we want to use it? can we optimize?
-		distLock := CreateDistLock(path, c.zkConn)
 
-		distLock.Acquire()
+		// get the inode from zookeeper
+		inode, err := c.getINode(path)
 
-		c.zkConn.Delete(path, -1)
+		if err != nil {
+			return nil, err
+		}
 
-		distLock.Release()
+		if inode.IsDir {
+
+			subdirs, _, err := c.zkConn.Children(path)
+
+			if err != nil {
+				return nil
+			}
+
+			// recursively remove subdirectories + files
+			c.removeDir(subdirs)
+
+			// once all those are removed, acquire lock and delete this directory
+
+			distLock := CreateDistLock(path, c.zkConn)
+
+			distLock.Acquire()
+
+			c.zkConn.Delete(path, -1)
+
+			distLock.Release()
+
+		} else {
+
+			// if file, acquire lock and delete
+
+			distLock := CreateDistLock(path, c.zkConn)
+
+			distLock.Acquire()
+
+			c.zkConn.Delete(path, -1)
+
+			distLock.Release()
+
+		}
+
 	} else {
 		return err
 	}
@@ -339,6 +375,60 @@ func (c *PuddleClient) findNextFreeFD() int {
 // helper function to return the tap addr from a client node, eg /tapestry/CLIENTUUID
 func (c *PuddleClient) getFullTapestryAddrPath() string {
 	return c.tapestryPath + "/" + c.ID
+}
+
+// takes in children of directory we are removing
+// if file: acquire lock and remove
+// if dir: recur, once done acquire directory lock and remove.
+func (c *PuddleClient) removeDir(paths []string) error {
+
+	for _, path := range paths {
+
+		inode, err := c.getINode(path)
+
+		if err != nil {
+			return err
+		}
+
+		if inode.isDir {
+
+			// like remove
+			// get children if directory, recursively remove all subdirectories
+			subdirs, _, err := c.zkConn.Children(path)
+
+			if err != nil {
+				return nil
+			}
+
+			// recursively remove subdirectories + files
+			c.removeDir(subdirs)
+
+			// once all those are removed, acquire lock and delete this directory
+
+			distLock := CreateDistLock(path, c.zkConn)
+
+			distLock.Acquire()
+
+			c.zkConn.Delete(path, -1)
+
+			distLock.Release()
+
+		} else {
+
+			// if file, acquire lock and delete
+
+			distLock := CreateDistLock(path, c.zkConn)
+
+			distLock.Acquire()
+
+			c.zkConn.Delete(path, -1)
+
+			distLock.Release()
+
+			return nil
+		}
+	}
+
 }
 
 // helper function given path, decodes byte to return inode.

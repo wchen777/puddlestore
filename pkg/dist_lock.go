@@ -70,6 +70,7 @@ func CreateDistLock(root string, zkConn *zk.Conn) *DistLock {
 }
 
 // NORMAL LOCK IMPLEMENTATION:
+// todo: realease lock if crash
 func (d *DistLock) Acquire() (err error) {
 
 	// 1. call create
