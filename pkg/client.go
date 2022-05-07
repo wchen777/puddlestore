@@ -84,6 +84,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	}
 
 	var newFileinode *inode
+	data := make([]byte, 0)
 
 	if !fileExists { // if the file metadata does not exist in the zookeeper fs
 
@@ -125,6 +126,9 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			return -1, err
 		}
 
+		// TODO: READ THE FILE DATA FROM TAPESTRY USING BLOCKS FOUND IN INODE
+		data = make([]byte, 0)
+
 	}
 
 	// get next client file descriptor
@@ -137,7 +141,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	// add the file to the open files list
 	c.openFiles[fd] = &OpenFile{
 		INode: newFileinode,
-		Data:  make([]byte, 0),
+		Data:  data,
 	}
 
 	// if we have specified write, add fd to dirty files (to be flushed on close)
