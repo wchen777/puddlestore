@@ -3,8 +3,6 @@ package pkg
 import (
 	"errors"
 
-	dist_lock "dist_lock"
-
 	"github.com/go-zookeeper/zk"
 	uuid "github.com/google/uuid"
 )
@@ -211,7 +209,7 @@ func (c *PuddleClient) Remove(path string) error {
 
 		// acquire lock for this path
 		// todo: do we have to create lock everytime we want to use it? can we optimize?
-		distLock := dist_lock.CreateDistLock(path, c.zkConn)
+		distLock := CreateDistLock(path, c.zkConn)
 
 		distLock.Acquire()
 
@@ -235,6 +233,21 @@ func (c *PuddleClient) List(path string) ([]string, error) {
 	}
 
 	if exists {
+
+		// get the inode from zookeeper
+		inode, err := c.getINode(path)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// if directory, print out subdirectories
+		// otherwise, print out file.
+		if inode.IsDir {
+
+		} else {
+
+		}
 
 	} else {
 		return nil, err
@@ -311,4 +324,23 @@ func (c *PuddleClient) findNextFreeFD() int {
 // helper function to return the tap addr from a client node, eg /tapestry/CLIENTUUID
 func (c *PuddleClient) getFullTapestryAddrPath() string {
 	return c.tapestryPath + "/" + c.ID
+}
+
+// helper function given path, decodes byte to return inode.
+func (c *PuddleClient) getINode(path string) (*inode, error) {
+
+	// get the inode from zookeeper
+	data, _, err := c.zkConn.Get(c.fsPath + "/" + path)
+
+	if err != nil {
+		return -1, err
+	}
+
+	// unmarshal the inode
+	newFileinode, err := decodeInode(data)
+	if err != nil {
+		return -1, err
+	}
+
+	return newFileinode, nil
 }
