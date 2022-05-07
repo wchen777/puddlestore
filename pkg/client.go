@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/go-zookeeper/zk"
 	uuid "github.com/google/uuid"
@@ -241,13 +242,27 @@ func (c *PuddleClient) List(path string) ([]string, error) {
 			return nil, err
 		}
 
+		var output []string
+
 		// if directory, print out subdirectories
 		// otherwise, print out file.
 		if inode.IsDir {
 
+			// grab children of this directory
+			// CONCERN: may return locks on this directory too? do we filter? or should we output?
+			output, _, err = c.zkConn.Children(path)
+
+			if err != nil {
+				return nil, err
+			}
+
 		} else {
 
+			// not directory, simply output file name(path/to/file --> file)
+			output = append(output, path[strings.LastIndex(path, "/")+1:])
 		}
+
+		return output, nil
 
 	} else {
 		return nil, err
