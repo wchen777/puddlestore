@@ -2,13 +2,19 @@ package pkg
 
 import (
 	"errors"
+	"math/rand"
 	"strings"
+
+	tapestry "tapestry/pkg"
 
 	"github.com/go-zookeeper/zk"
 	uuid "github.com/google/uuid"
 )
 
 // Client is a puddlestore client interface that will communicate with puddlestore nodes
+
+// each block is 4000 bytes.(4kb)
+const block := 4000
 type Client interface {
 	// `Open` opens a file and returns a file descriptor. If the `create` is true and the
 	// file does not exist, create the file. If `create` is false and the file does not exist,
@@ -65,7 +71,7 @@ type PuddleClient struct {
 	// lock states field here, best way to store read and write locks associated with an inode?
 
 	fsPath       string   // file system path prefix within zookeeper, e.g. /puddlestore
-	lockFile     Distlock // keeps the lock that was used to lock file
+	lockFile     DistLock // keeps the lock that was used to lock file
 	tapestryPath string   // path root for tapestry nodes assigned to each client, e.g. /tapestry
 
 	dirtyFiles map[int]bool // dirty files set ? for flushing, should contain file descriptors (or file paths)?
@@ -168,14 +174,100 @@ func (c *PuddleClient) Close(fd int) error {
 	// check dirty files set
 	if c.dirtyFiles[fd] {
 		// flush the file
+		r := rand.New(rand.NewSource(4444))
 
-		// get the inode from the open files list
+		// get children of tapestry/node- to get tap nodes
+		nodes, _, err := c.zkConn.Children("tapestry/node-")
+
+		if err != nil {
+			// release lock.
+			c.lockFile.Release()
+
+			// close conn
+			c.zkConn.Close()
+
+			return err
+		}
+
+		// select random node to connect to
+		selectedNode := nodes[r.Intn(len(nodes))]
+
+		toDecode, _, err := c.zkConn.Get(selectedNode)
+
+		if err != nil {
+			// release lock.
+			c.lockFile.Release()
+
+			// close conn
+			c.zkConn.Close()
+
+			return err
+		}
+
+		inode, err := decodeInode(toDecode)
+
+		if err != nil {
+			// release lock.
+			c.lockFile.Release()
+
+			// close conn
+			c.zkConn.Close()
+
+			return err
+		}
+
+		// connects to tap belonging to inode.Filepath(which is addr of tap node)
+		client, err := tapestry.Connect(inode.Filepath)
+
+		if err != nil {
+			// release lock.
+			c.lockFile.Release()
+
+			// close conn
+			c.zkConn.Close()
+
+			return err
+		}
+
+		// release lock.
+		c.lockFile.Release()
+
+		// get the inode + cached data from the open files list
 		file := c.openFiles[fd]
 
-		// flush the data blocks that we've written to
+		// keeps track of end of array to get correct slice of bytes.
+		var end int
 
-		// need to contact tapestry, copy on write!!
-		// remember to modify the inode in zk to reflect the new data blocks
+		// keeps track of new uuids
+		var newUIDs []uuid.UUID
+
+		for i := 0; i < len(file.Data); i += block {
+
+			end += block 
+
+			// prevents slice beyond boundary.
+			if end > len(file.Data) {
+				end = len(file.Data)
+			}
+
+			// new 4kb data
+			dataBlock := file.Data[i:end]
+			
+			// create new uuid, store into tapestry uuid associated with block
+			newUID := uuid.NewRandom()
+
+			client.Store(newUID, dataBlock)
+
+			// add to array of newuids to replace old in inode.
+			append(newUIDs, newUID)
+		}
+
+		// here: done populating tap with newuids <--> blocks
+		// replace inode uids with new
+		file.INode.Blocks = newUIDs
+
+		// can't use fd anymore
+		c.openFiles[fd] = nil
 
 		// remove the file from the dirty files set
 		delete(c.dirtyFiles, fd)
@@ -271,6 +363,7 @@ func (c *PuddleClient) Remove(path string) error {
 
 // list file & directory names (not full names) under `path`
 func (c *PuddleClient) List(path string) ([]string, error) {
+
 	// search for path in zookeeper
 	exists, _, err := c.zkConn.Exists(c.fsPath + "/" + path)
 
@@ -316,14 +409,7 @@ func (c *PuddleClient) List(path string) ([]string, error) {
 
 // release zk connection
 func (c *PuddleClient) Exit() {
-
 	c.zkConn.Close()
-
-	// todo. randomly contact tap node
-	// use tapnode.store(string-(addr), value from fd)
-
-	// release lock.
-	c.lockFile.Release()
 }
 
 // -------------------------- UTILITY/HELPER FUNCTIONS -------------------------- //
@@ -406,7 +492,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 			return err
 		}
 
-		if inode.isDir {
+		if inode.IsDir {
 
 			// like remove
 			// get children if directory, recursively remove all subdirectories
@@ -445,6 +531,8 @@ func (c *PuddleClient) removeDir(paths []string) error {
 		}
 	}
 
+	return nil
+
 }
 
 // helper function given path, decodes byte to return inode.
@@ -454,13 +542,13 @@ func (c *PuddleClient) getINode(path string) (*inode, error) {
 	data, _, err := c.zkConn.Get(c.fsPath + "/" + path)
 
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 
 	// unmarshal the inode
 	newFileinode, err := decodeInode(data)
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 
 	return newFileinode, nil

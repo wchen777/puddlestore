@@ -85,9 +85,8 @@ func (c *Cluster) NewClient() (Client, error) {
 // CreateCluster starts all nodes necessary for puddlestore
 func CreateCluster(config Config) (*Cluster, error) {
 
-	// TODO: Start your tapestry cluster with size config.NumTapestry. You should
-	// also use the zkAddr (zookeeper address) found in the config and pass it to
-	// your Tapestry constructor method
+	// try and establish a new connection
+	conn, err := ConnectZk(config.ZkAddr)
 
 	// create random set of tapestries of count config.NumTapestry
 	randNodes, err := tapestry.MakeRandomTapestries(4444, config.NumTapestry)
@@ -108,6 +107,27 @@ func CreateCluster(config Config) (*Cluster, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	// register nodes in /tapestry ...
+	for _, node := range nodes {
+
+		// encode tap node
+		Tapinode := &inode{
+			Filepath: node.tap.Node.Address, // contains tap address to connect to
+			Size:     0,
+			Blocks:   make([]uuid.UUID, 0),
+			IsDir:    false,
+		}
+
+		// encode a inode with tap node address.
+		inode, err := encodeInode(*Tapinode)
+
+		if err != nil {
+			return nil, err
+		}
+
+		conn.Create("tapestry/node-", inode, zk.FlagSequence, zk.WorldACL(zk.PermAll))
 	}
 
 	return &Cluster{config: config, nodes: nodes}, nil
