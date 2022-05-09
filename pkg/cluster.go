@@ -63,22 +63,6 @@ func (c *Cluster) NewClient() (Client, error) {
 		return nil, err
 	}
 
-	// TODO: WHAT SHOULD WE STORE IN ZK, JUST THE TAP ADDR OR THE WHOLE TAP NODE OBJECT?
-	assignedTapNode := c.HashClientIDToTapNode(client.ID)    // use load balancing to assign client to tapestry node
-	tapNodeMarshalled, err := encodeMsgPack(assignedTapNode) // marshal tapestry node to be stored in zk
-
-	if err != nil {
-		return nil, err
-	}
-
-	// use the zk conn to create a new sequential + ephemeral node to represent the client
-	// the data stored at this znode to hold the assigned tapestry address (RN IT IS WHOLE TAP NODE OBJ)
-	_, err = client.zkConn.Create(client.tapestryPath+"/"+client.ID, tapNodeMarshalled.Bytes(), zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
-
-	if err != nil {
-		return nil, err
-	}
-
 	return client, nil
 }
 
