@@ -30,6 +30,12 @@ func (c *Cluster) HashClientIDToTapNode(clientID string) *Tapestry {
 // NewClient creates a new Puddlestore client
 func (c *Cluster) NewClient() (Client, error) {
 	// TODO: Return a new PuddleStore Client that implements the Client interface
+	// todo pt2: we should be listing out ALL tapestry clients
+	// tapestry/node-01-addr
+	// tapestry/node-02-addr
+	// when a client connects, we select from these tap clients with load balencing
+	// each client isn't strictly assigned a tap node, we simply just use these tap clients for accessing data
+	// see ed post #649 + fault tolerence section in gearup.
 
 	// try and establish a new connection
 	conn, err := ConnectZk(c.config.ZkAddr)

@@ -64,9 +64,9 @@ type PuddleClient struct {
 
 	// lock states field here, best way to store read and write locks associated with an inode?
 
-	fsPath       string // file system path prefix within zookeeper, e.g. /puddlestore
-	locksPath    string // locks path prefix within zookeeper system, e.g. /locks
-	tapestryPath string // path root for tapestry nodes assigned to each client, e.g. /tapestry
+	fsPath       string   // file system path prefix within zookeeper, e.g. /puddlestore
+	lockFile     Distlock // keeps the lock that was used to lock file
+	tapestryPath string   // path root for tapestry nodes assigned to each client, e.g. /tapestry
 
 	dirtyFiles map[int]bool // dirty files set ? for flushing, should contain file descriptors (or file paths)?
 
@@ -83,6 +83,14 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	if err != nil {
 		return -1, err
 	}
+
+	// create lock for file
+	distlock := CreateDistLock(c.fsPath+"/"+path, c.zkConn)
+
+	distlock.Acquire()
+
+	// set lock to acquired lock.
+	c.lockFile = distlock
 
 	var newFileinode *inode
 	data := make([]byte, 0)
@@ -197,6 +205,7 @@ func (c *PuddleClient) Mkdir(path string) error {
 
 // remove a directory or file
 func (c *PuddleClient) Remove(path string) error {
+
 	// search for path in zookeeper
 	exists, _, err := c.zkConn.Exists(c.fsPath + "/" + path)
 
@@ -220,7 +229,7 @@ func (c *PuddleClient) Remove(path string) error {
 
 		if inode.IsDir {
 
-			subdirs, _, err := c.zkConn.Children(path)
+			subdirs, _, err := c.zkConn.Children(c.fsPath + "/" + path)
 
 			if err != nil {
 				return nil
@@ -231,11 +240,11 @@ func (c *PuddleClient) Remove(path string) error {
 
 			// once all those are removed, acquire lock and delete this directory
 
-			distLock := CreateDistLock(path, c.zkConn)
+			distLock := CreateDistLock(c.fsPath+"/"+path, c.zkConn)
 
 			distLock.Acquire()
 
-			c.zkConn.Delete(path, -1)
+			c.zkConn.Delete(c.fsPath+"/"+path, -1)
 
 			distLock.Release()
 
@@ -243,11 +252,11 @@ func (c *PuddleClient) Remove(path string) error {
 
 			// if file, acquire lock and delete
 
-			distLock := CreateDistLock(path, c.zkConn)
+			distLock := CreateDistLock(c.fsPath+"/"+path, c.zkConn)
 
 			distLock.Acquire()
 
-			c.zkConn.Delete(path, -1)
+			c.zkConn.Delete(c.fsPath+"/"+path, -1)
 
 			distLock.Release()
 
@@ -286,7 +295,7 @@ func (c *PuddleClient) List(path string) ([]string, error) {
 
 			// grab children of this directory
 			// CONCERN: may return locks on this directory too? do we filter? or should we output?
-			output, _, err = c.zkConn.Children(path)
+			output, _, err = c.zkConn.Children(c.fsPath + "/" + path)
 
 			if err != nil {
 				return nil, err
@@ -307,7 +316,14 @@ func (c *PuddleClient) List(path string) ([]string, error) {
 
 // release zk connection
 func (c *PuddleClient) Exit() {
+
 	c.zkConn.Close()
+
+	// todo. randomly contact tap node
+	// use tapnode.store(string-(addr), value from fd)
+
+	// release lock.
+	c.lockFile.Release()
 }
 
 // -------------------------- UTILITY/HELPER FUNCTIONS -------------------------- //
@@ -394,7 +410,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 
 			// like remove
 			// get children if directory, recursively remove all subdirectories
-			subdirs, _, err := c.zkConn.Children(path)
+			subdirs, _, err := c.zkConn.Children(c.fsPath + "/" + path)
 
 			if err != nil {
 				return nil
@@ -405,7 +421,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 
 			// once all those are removed, acquire lock and delete this directory
 
-			distLock := CreateDistLock(path, c.zkConn)
+			distLock := CreateDistLock(c.fsPath+"/"+path, c.zkConn)
 
 			distLock.Acquire()
 
@@ -417,11 +433,11 @@ func (c *PuddleClient) removeDir(paths []string) error {
 
 			// if file, acquire lock and delete
 
-			distLock := CreateDistLock(path, c.zkConn)
+			distLock := CreateDistLock(c.fsPath+"/"+path, c.zkConn)
 
 			distLock.Acquire()
 
-			c.zkConn.Delete(path, -1)
+			c.zkConn.Delete(c.fsPath+"/"+path, -1)
 
 			distLock.Release()
 
