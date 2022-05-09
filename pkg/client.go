@@ -14,7 +14,8 @@ import (
 // Client is a puddlestore client interface that will communicate with puddlestore nodes
 
 // each block is 4000 bytes.(4kb)
-const block := 4000
+const BLOCK_SIZE = 4096
+
 type Client interface {
 	// `Open` opens a file and returns a file descriptor. If the `create` is true and the
 	// file does not exist, create the file. If `create` is false and the file does not exist,
@@ -59,8 +60,9 @@ type Client interface {
 // TODO: implement the Client interface
 
 type OpenFile struct {
-	INode *inode
-	Data  []byte // cached file block data, TODO: how do we get all the data in one place from tapestry blocks ?
+	INode    *inode
+	Data     []byte    // cached file block data, TODO: how do we get all the data in one place from tapestry blocks ?
+	FileLock *DistLock // file lock
 }
 
 type PuddleClient struct {
@@ -70,9 +72,8 @@ type PuddleClient struct {
 
 	// lock states field here, best way to store read and write locks associated with an inode?
 
-	fsPath       string   // file system path prefix within zookeeper, e.g. /puddlestore
-	lockFile     DistLock // keeps the lock that was used to lock file, // TODO: multiple files can be locked at the same time?
-	tapestryPath string   // path root for tapestry nodes assigned to each client, e.g. /tapestry
+	fsPath       string // file system path prefix within zookeeper, e.g. /puddlestore
+	tapestryPath string // path root for tapestry nodes assigned to each client, e.g. /tapestry
 
 	dirtyFiles map[int]bool // dirty files set ? for flushing, should contain file descriptors (or file paths)?
 
@@ -94,9 +95,6 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	distlock := CreateDistLock(c.fsPath+"/"+path, c.zkConn)
 
 	distlock.Acquire()
-
-	// set lock to acquired lock.
-	c.lockFile = *distlock
 
 	var newFileinode *inode
 	data := make([]byte, 0)
@@ -161,8 +159,9 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 	// add the file to the open files list
 	c.openFiles[fd] = &OpenFile{
-		INode: newFileinode,
-		Data:  data,
+		INode:    newFileinode,
+		Data:     data,
+		FileLock: distlock,
 	}
 
 	// if we have specified write, add fd to dirty files (to be flushed on close)
@@ -177,6 +176,9 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 // close a file and flush its contents to the distributed filesystem
 func (c *PuddleClient) Close(fd int) error {
 
+	// open file
+	openFile := c.openFiles[fd]
+
 	// check dirty files set
 	if c.dirtyFiles[fd] {
 		// flush the file
@@ -187,7 +189,7 @@ func (c *PuddleClient) Close(fd int) error {
 
 		if err != nil {
 			// release lock.
-			c.lockFile.Release()
+			openFile.FileLock.Release()
 
 			// close conn
 			c.zkConn.Close()
@@ -202,7 +204,7 @@ func (c *PuddleClient) Close(fd int) error {
 
 		if err != nil {
 			// release lock.
-			c.lockFile.Release()
+			openFile.FileLock.Release()
 
 			// close conn
 			c.zkConn.Close()
@@ -214,7 +216,7 @@ func (c *PuddleClient) Close(fd int) error {
 
 		if err != nil {
 			// release lock.
-			c.lockFile.Release()
+			openFile.FileLock.Release()
 
 			// close conn
 			c.zkConn.Close()
@@ -227,7 +229,7 @@ func (c *PuddleClient) Close(fd int) error {
 
 		if err != nil {
 			// release lock.
-			c.lockFile.Release()
+			openFile.FileLock.Release()
 
 			// close conn
 			c.zkConn.Close()
@@ -236,10 +238,7 @@ func (c *PuddleClient) Close(fd int) error {
 		}
 
 		// release lock.
-		c.lockFile.Release()
-
-		// get the inode + cached data from the open files list
-		file := c.openFiles[fd]
+		openFile.FileLock.Release()
 
 		// keeps track of end of array to get correct slice of bytes.
 		var end int
@@ -247,32 +246,38 @@ func (c *PuddleClient) Close(fd int) error {
 		// keeps track of new uuids
 		var newUIDs []uuid.UUID
 
-		for i := 0; i < len(file.Data); i += block {
+		for i := 0; i < len(openFile.Data); i += BLOCK_SIZE {
 
-			end += block 
+			end += BLOCK_SIZE
 
 			// prevents slice beyond boundary.
-			if end > len(file.Data) {
-				end = len(file.Data)
+			if end > len(openFile.Data) {
+				end = len(openFile.Data)
 			}
 
 			// new 4kb data
-			dataBlock := file.Data[i:end]
-			
-			// create new uuid, store into tapestry uuid associated with block
-			newUID := uuid.NewRandom()
+			dataBlock := openFile.Data[i:end]
 
-			client.Store(newUID, dataBlock)
+			// create new uuid, store into tapestry uuid associated with block
+			newUID, err := uuid.NewRandom()
+
+			if err != nil {
+				// close conn
+				c.zkConn.Close()
+				return err
+			}
+
+			client.Store(newUID.String(), dataBlock)
 
 			// add to array of newuids to replace old in inode.
-			append(newUIDs, newUID)
+			newUIDs = append(newUIDs, newUID)
 		}
 
 		// here: done populating tap with newuids <--> blocks
 		// replace inode uids with new
-		file.INode.Blocks = newUIDs
+		openFile.INode.Blocks = newUIDs
 
-		// can't use fd anymore
+		// clear fd
 		c.openFiles[fd] = nil
 
 		// remove the file from the dirty files set
@@ -481,9 +486,9 @@ func (c *PuddleClient) findNextFreeFD() int {
 }
 
 // helper function to return the tap addr from a client node, eg /tapestry/CLIENTUUID
-func (c *PuddleClient) getFullTapestryAddrPath() string {
-	return c.tapestryPath + "/" + c.ID
-}
+// func (c *PuddleClient) getFullTapestryAddrPath() string {
+// 	return c.tapestryPath + "/" + c.ID
+// }
 
 // takes in children of directory we are removing
 // if file: acquire lock and remove
