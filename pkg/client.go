@@ -65,7 +65,7 @@ type PuddleClient struct {
 	// lock states field here, best way to store read and write locks associated with an inode?
 
 	fsPath       string   // file system path prefix within zookeeper, e.g. /puddlestore
-	lockFile     DistLock // keeps the lock that was used to lock file
+	lockFile     DistLock // keeps the lock that was used to lock file, // TODO: multiple files can be locked at the same time?
 	tapestryPath string   // path root for tapestry nodes assigned to each client, e.g. /tapestry
 
 	dirtyFiles map[int]bool // dirty files set ? for flushing, should contain file descriptors (or file paths)?
@@ -98,6 +98,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	if !fileExists { // if the file metadata does not exist in the zookeeper fs
 
 		if !create { // if we are not creating and the file does not exist, return error
+			distlock.Release()
 			return -1, zk.ErrNoNode
 		} else { // otherwise create the file
 
@@ -112,6 +113,8 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			inodeBuffer, err := encodeInode(*newFileinode)
 
 			if err != nil { // encode fails
+				// release the lock
+				distlock.Release()
 				return -1, err
 			}
 
@@ -126,12 +129,14 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		data, _, err := c.zkConn.Get(c.fsPath + "/" + path)
 
 		if err != nil {
+			distlock.Release()
 			return -1, err
 		}
 
 		// unmarshal the inode
 		newFileinode, err = decodeInode(data)
 		if err != nil {
+			distlock.Release()
 			return -1, err
 		}
 
@@ -144,6 +149,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	fd := c.findNextFreeFD()
 
 	if fd == -1 { // if there are no free file descriptors, return error
+		distlock.Release()
 		return -1, errors.New("no free file descriptors, ENOMEM")
 	}
 
