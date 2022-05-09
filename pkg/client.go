@@ -224,7 +224,7 @@ func (c *PuddleClient) Remove(path string) error {
 		inode, err := c.getINode(path)
 
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if inode.IsDir {
@@ -345,18 +345,18 @@ func (c *PuddleClient) initPaths() error {
 		}
 	}
 
-	// repeat for locks root
-	locksExists, _, err := c.zkConn.Exists(c.locksPath)
-	if err != nil {
-		return err
-	}
+	// // repeat for locks root
+	// locksExists, _, err := c.zkConn.Exists(c.locksPath)
+	// if err != nil {
+	// 	return err
+	// }
 
-	if !locksExists {
-		_, err = c.zkConn.Create(c.locksPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
-		if err != nil {
-			return err
-		}
-	}
+	// if !locksExists {
+	// 	_, err = c.zkConn.Create(c.locksPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	// repeat for tapestry root
 	tapestryExists, _, err := c.zkConn.Exists(c.tapestryPath)
@@ -406,7 +406,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 			return err
 		}
 
-		if inode.isDir {
+		if inode.IsDir {
 
 			// like remove
 			// get children if directory, recursively remove all subdirectories
@@ -444,7 +444,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 			return nil
 		}
 	}
-
+	return nil
 }
 
 // helper function given path, decodes byte to return inode.
@@ -454,13 +454,13 @@ func (c *PuddleClient) getINode(path string) (*inode, error) {
 	data, _, err := c.zkConn.Get(c.fsPath + "/" + path)
 
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 
 	// unmarshal the inode
 	newFileinode, err := decodeInode(data)
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 
 	return newFileinode, nil
