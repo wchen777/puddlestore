@@ -53,7 +53,8 @@ func (c *Cluster) NewClient() (Client, error) {
 		// locksPath:    LOCK_ROOT,
 		tapestryPath: TAP_ADDRESS_ROOT,
 
-		openFiles: make([]*OpenFile, 256),
+		openFiles:  make([]*OpenFile, CLIENT_OPEN_FILES_LIMIT),
+		dirtyFiles: make(map[int]bool, 0),
 	}
 
 	// init paths for all zk roots, if they do not exist
@@ -111,7 +112,7 @@ func CreateCluster(config Config) (*Cluster, error) {
 			return nil, err
 		}
 
-		conn.Create("tapestry/node-", inode, zk.FlagSequence, zk.WorldACL(zk.PermAll))
+		conn.Create(TAP_ADDRESS_ROOT+"/node-", inode, zk.FlagSequence, zk.WorldACL(zk.PermAll))
 	}
 
 	return &Cluster{config: config, nodes: nodes}, nil

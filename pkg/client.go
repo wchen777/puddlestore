@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math/rand"
 	"strings"
+	"time"
 
 	tapestry "tapestry/pkg"
 
@@ -182,10 +183,7 @@ func (c *PuddleClient) Close(fd int) error {
 	// check dirty files set
 	if c.dirtyFiles[fd] {
 		// flush the file
-		r := rand.New(rand.NewSource(4444))
-
-		// get children of tapestry/node- to get tap nodes
-		nodes, _, err := c.zkConn.Children("tapestry/node-")
+		selectedNode, err := c.getRandomTapestryNode() // TODO: check this logic in this helper
 
 		if err != nil {
 			// release lock.
@@ -196,9 +194,6 @@ func (c *PuddleClient) Close(fd int) error {
 
 			return err
 		}
-
-		// select random node to connect to
-		selectedNode := nodes[r.Intn(len(nodes))]
 
 		toDecode, _, err := c.zkConn.Get(selectedNode)
 
@@ -259,13 +254,7 @@ func (c *PuddleClient) Close(fd int) error {
 			dataBlock := openFile.Data[i:end]
 
 			// create new uuid, store into tapestry uuid associated with block
-			newUID, err := uuid.NewRandom()
-
-			if err != nil {
-				// close conn
-				c.zkConn.Close()
-				return err
-			}
+			newUID := uuid.New()
 
 			client.Store(newUID.String(), dataBlock)
 
@@ -354,6 +343,8 @@ func (c *PuddleClient) Remove(path string) error {
 		} else {
 
 			// if file, acquire lock and delete
+
+			// TODO: check if file is open?, handle this case here (we already have the lock?, remove from open files?)
 
 			distLock := CreateDistLock(c.fsPath+"/"+path, c.zkConn)
 
@@ -561,4 +552,20 @@ func (c *PuddleClient) getINode(path string) (*inode, error) {
 	}
 
 	return newFileinode, nil
+}
+
+func (c *PuddleClient) getRandomTapestryNode() (string, error) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano())) // seed with current time
+
+	// get children of tapestry/node- to get tap nodes
+	nodes, _, err := c.zkConn.Children(c.tapestryPath + "/node-")
+
+	if err != nil {
+		return "", err
+	}
+
+	// select random node to connect to
+	selectedNode := nodes[r.Intn(len(nodes))]
+
+	return selectedNode, nil
 }
