@@ -13,6 +13,10 @@ type Tapestry struct {
 	zk  *zk.Conn
 }
 
+type TapestryAddrNode struct {
+	Addr string
+}
+
 // NewTapestry creates a new tapestry struct
 func NewTapestry(tap *tapestry.Node, zkAddr string) (*Tapestry, error) {
 	//  create new zkConn.

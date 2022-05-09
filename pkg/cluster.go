@@ -54,7 +54,7 @@ func (c *Cluster) NewClient() (Client, error) {
 		tapestryPath: TAP_ADDRESS_ROOT,
 
 		openFiles:  make([]*OpenFile, CLIENT_OPEN_FILES_LIMIT),
-		dirtyFiles: make(map[int]bool, 0),
+		dirtyFiles: make(map[int]bool),
 	}
 
 	// init paths for all zk roots, if they do not exist
@@ -98,21 +98,18 @@ func CreateCluster(config Config) (*Cluster, error) {
 	for _, node := range nodes {
 
 		// encode tap node
-		Tapinode := &inode{
-			Filepath: node.tap.Node.Address, // contains tap address to connect to
-			Size:     0,
-			Blocks:   make([]uuid.UUID, 0),
-			IsDir:    false,
+		Tapinode := &TapestryAddrNode{
+			Addr: node.tap.Node.Address, // contains tap address to connect to
 		}
 
 		// encode a inode with tap node address.
-		inode, err := encodeInode(*Tapinode)
+		tapNodeBuffer, err := encodeMsgPack(Tapinode)
 
 		if err != nil {
 			return nil, err
 		}
 
-		conn.Create(TAP_ADDRESS_ROOT+"/node-", inode, zk.FlagSequence, zk.WorldACL(zk.PermAll))
+		conn.Create(TAP_ADDRESS_ROOT+"/node-", tapNodeBuffer.Bytes(), zk.FlagSequence, zk.WorldACL(zk.PermAll))
 	}
 
 	return &Cluster{config: config, nodes: nodes}, nil

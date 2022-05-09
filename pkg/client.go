@@ -14,7 +14,7 @@ import (
 
 // Client is a puddlestore client interface that will communicate with puddlestore nodes
 
-// each block is 4000 bytes.(4kb)
+// each block is 4096 bytes.(4kb)
 const BLOCK_SIZE = 4096
 
 type Client interface {
@@ -129,7 +129,6 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		}
 
 	} else {
-
 		// get the inode from zookeeper
 		data, _, err := c.zkConn.Get(c.fsPath + "/" + path)
 
@@ -139,14 +138,40 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		}
 
 		// unmarshal the inode
-		newFileinode, err = decodeInode(data)
+		newFileinode, err = decodeInode(data) // contains existing inode data
+
 		if err != nil {
 			distlock.Release()
 			return -1, err
 		}
 
-		// TODO: READ THE FILE DATA FROM TAPESTRY USING BLOCKS FOUND IN INODE
-		data = make([]byte, 0)
+		// READ THE FILE DATA FROM TAPESTRY USING BLOCKS FOUND IN INODE
+		selectedNode, err := c.getRandomTapestryNode() // get tapestry node path of random node
+
+		if err != nil {
+			distlock.Release()
+			return -1, err
+		}
+
+		client, err := c.getTapestryClientFromTapNodePath(selectedNode) // return the tap node connection
+
+		if err != nil {
+			distlock.Release()
+			return -1, err
+		}
+
+		// get the file data from tapestry, loop through block uuids and get the data from tapestry
+		for _, blockUUID := range newFileinode.Blocks {
+			blockData, err := client.Get(blockUUID.String())
+
+			if err != nil {
+				distlock.Release()
+				return -1, err
+			}
+
+			// fill data byte array
+			data = append(data, blockData...) // i'm getting a linter warning here??
+		}
 
 	}
 
@@ -183,6 +208,8 @@ func (c *PuddleClient) Close(fd int) error {
 	// check dirty files set
 	if c.dirtyFiles[fd] {
 		// flush the file
+
+		// grab a random tapestry node path from zookeeper
 		selectedNode, err := c.getRandomTapestryNode() // TODO: check this logic in this helper
 
 		if err != nil {
@@ -195,7 +222,7 @@ func (c *PuddleClient) Close(fd int) error {
 			return err
 		}
 
-		toDecode, _, err := c.zkConn.Get(selectedNode)
+		client, err := c.getTapestryClientFromTapNodePath(selectedNode)
 
 		if err != nil {
 			// release lock.
@@ -206,34 +233,6 @@ func (c *PuddleClient) Close(fd int) error {
 
 			return err
 		}
-
-		inode, err := decodeInode(toDecode)
-
-		if err != nil {
-			// release lock.
-			openFile.FileLock.Release()
-
-			// close conn
-			c.zkConn.Close()
-
-			return err
-		}
-
-		// connects to tap belonging to inode.Filepath(which is addr of tap node)
-		client, err := tapestry.Connect(inode.Filepath)
-
-		if err != nil {
-			// release lock.
-			openFile.FileLock.Release()
-
-			// close conn
-			c.zkConn.Close()
-
-			return err
-		}
-
-		// release lock.
-		openFile.FileLock.Release()
 
 		// keeps track of end of array to get correct slice of bytes.
 		var end int
@@ -265,6 +264,24 @@ func (c *PuddleClient) Close(fd int) error {
 		// here: done populating tap with newuids <--> blocks
 		// replace inode uids with new
 		openFile.INode.Blocks = newUIDs
+		// update size
+		openFile.INode.Size = uint64(len(openFile.Data))
+
+		// marshal the inode to bytes
+		inodeBuf, err := encodeInode(*openFile.INode)
+
+		if err != nil {
+			openFile.FileLock.Release()
+			// close conn
+			c.zkConn.Close()
+			return err
+		}
+
+		// update the inode in zookeeper, write back
+		c.zkConn.Set(c.fsPath+"/"+openFile.INode.Filepath, inodeBuf, -1)
+
+		// release lock.
+		openFile.FileLock.Release()
 
 		// clear fd
 		c.openFiles[fd] = nil
@@ -554,6 +571,8 @@ func (c *PuddleClient) getINode(path string) (*inode, error) {
 	return newFileinode, nil
 }
 
+// helper function that finds a random tapestry node address in /tapestry/node-xxxx,
+// and returns the address of that node.
 func (c *PuddleClient) getRandomTapestryNode() (string, error) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano())) // seed with current time
 
@@ -567,5 +586,26 @@ func (c *PuddleClient) getRandomTapestryNode() (string, error) {
 	// select random node to connect to
 	selectedNode := nodes[r.Intn(len(nodes))]
 
-	return selectedNode, nil
+	return selectedNode, nil // TODO: do we need to append tapestry path here?
+}
+
+func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapestry.Client, error) {
+
+	// grab the bytes stored at the tapestry node path
+	toDecode, _, err := c.zkConn.Get(filepath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var tapNode TapestryAddrNode
+	err = decodeMsgPack(toDecode, tapNode) // populates tapNode with addr
+
+	if err != nil {
+		return nil, err
+	}
+
+	// connects to tap belonging to inode.Filepath(which is addr of tap node)
+	return tapestry.Connect(tapNode.Addr)
+
 }
