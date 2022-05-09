@@ -296,19 +296,45 @@ func (c *PuddleClient) Close(fd int) error {
 // read a file and return a buffer of size `size` starting at `offset`
 func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 
-	// TODO: for offsets, create a helper function to get the correct data blocks from offset
-	return nil, nil
+	// get open file
+	openFile := c.openFiles[fd]
+
+	// get minimum of position to read to and size of file
+	endPos := size + offset
+	if endPos > openFile.INode.Size {
+		endPos = openFile.INode.Size
+	}
+
+	// get the data from the file
+	data := openFile.Data[offset:endPos]
+
+	return data, nil
 }
 
 // write a file and write `data` starting at `offset`
 func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 
 	// remember to modify the inode data stored locally on each write, flush to zookeeper on close
+
+	// get the open file
+	openFile := c.openFiles[fd]
+
+	endPos := offset + uint64(len(data)) // the final position of the data to be written
+
+	if endPos >= openFile.INode.Size { // if the end of the write is at or beyond the end of the file
+		openFile.Data = append(openFile.Data[:offset], data...) // overwrite everything past the end
+		openFile.INode.Size = endPos                            // update the size of the file
+	} else { // otherwise we have a chunk of file leftover that we need to append, no need to update size
+		half := append(data, openFile.Data[endPos:]...)         // second half of the newly modified file
+		openFile.Data = append(openFile.Data[:offset], half...) // is there a more efficient way to do this?
+	}
+
 	return nil
 }
 
 // create a directory at the specified path
 func (c *PuddleClient) Mkdir(path string) error {
+	// should just be a zookeeper create call?
 	return nil
 }
 
