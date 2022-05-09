@@ -277,7 +277,7 @@ func (c *PuddleClient) Close(fd int) error {
 			return err
 		}
 
-		// update the inode in zookeeper, write back
+		// write back the inode in zookeeper
 		c.zkConn.Set(c.fsPath+"/"+openFile.INode.Filepath, inodeBuf, -1)
 
 		// release lock.
@@ -631,7 +631,7 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 		return nil, err
 	}
 
-	// connects to tap belonging to inode.Filepath(which is addr of tap node)
+	// connects to tap belonging to inode.addr (which is addr of tap node)
 	return tapestry.Connect(tapNode.Addr)
 
 }
