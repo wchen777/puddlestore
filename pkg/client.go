@@ -89,18 +89,18 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	// clean path to remove trailing dir.
 	path = strings.TrimSuffix(path, "/")
 
-	fmt.Println("open: ", path)
-
-	// search for the file path metadata in zookeeper
-	fileExists, _, err := c.zkConn.Exists(c.fsPath + path)
+	// search for lock
+	lockExists, _, err := c.zkConn.Exists(LOCK_ROOT + path)
 
 	if err != nil {
 		return -1, err
 	}
 
+	fmt.Println("open: ", path)
+
 	// create lock for file
 	// if file doesn't exist, establish this in /lock path
-	if !fileExists {
+	if !lockExists {
 		_, err = c.zkConn.Create(LOCK_ROOT+path, []byte(""), 0, zk.WorldACL(zk.PermAll))
 
 		if err != nil {
@@ -111,6 +111,14 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	distlock := CreateDistLock(LOCK_ROOT+path, c.zkConn)
 
 	distlock.Acquire()
+
+	// search for the file path metadata in zookeeper once we get lock.
+	fileExists, _, err := c.zkConn.Exists(c.fsPath + path)
+
+	if err != nil {
+		return -1, err
+	}
+
 	fmt.Printf("here\n")
 
 	var newFileinode *inode
