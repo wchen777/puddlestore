@@ -59,9 +59,6 @@ func (c *Cluster) NewClient() (Client, error) {
 		dirtyFiles: make(map[int]bool),
 	}
 
-	// init paths for all zk roots, if they do not exist
-	err = client.initPaths()
-
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +78,9 @@ func CreateCluster(config Config) (*Cluster, error) {
 
 	// create tapestry root path
 	conn.Create(TAP_ADDRESS_ROOT, []byte{}, 0, zk.WorldACL(zk.PermAll))
+
+	// init paths directories: /puddlestore, /locks, /tapestry
+	initPaths(conn)
 
 	// create random set of tapestries of count config.NumTapestry
 	randNodes, err := tapestry.MakeRandomTapestries(SEED, config.NumTapestry)
@@ -137,6 +137,29 @@ func (c *Cluster) Shutdown() {
 	}
 
 	time.Sleep(time.Second)
+}
+
+// initializes the zookeeper internal file system and locks directory paths
+func initPaths(c *zk.Conn) error {
+
+	// if fs path does not exist, create it
+	_, err := c.Create(FS_ROOT, []byte{}, 0, zk.WorldACL(zk.PermAll))
+
+	if err != nil {
+		return err
+	}
+
+	_, err = c.Create(TAP_ADDRESS_ROOT, []byte{}, 0, zk.WorldACL(zk.PermAll))
+	if err != nil {
+		return err
+	}
+
+	_, err = c.Create(LOCK_ROOT, []byte{}, 0, zk.WorldACL(zk.PermAll))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // RANDOM IDEAS:

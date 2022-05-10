@@ -622,52 +622,6 @@ func (c *PuddleClient) Exit() {
 
 // -------------------------- UTILITY/HELPER FUNCTIONS -------------------------- //
 
-// initializes the zookeeper internal file system and locks directory paths
-func (c *PuddleClient) initPaths() error {
-
-	// fs path exists
-	fsExists, _, err := c.zkConn.Exists(c.fsPath)
-	if err != nil {
-		return err
-	}
-
-	// if fs path does not exist, create it
-	if !fsExists {
-		_, err = c.zkConn.Create(c.fsPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
-		if err != nil {
-			return err
-		}
-	}
-
-	// // repeat for locks root
-	// locksExists, _, err := c.zkConn.Exists(c.locksPath)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if !locksExists {
-	// 	_, err = c.zkConn.Create(c.locksPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-
-	// repeat for tapestry root
-	tapestryExists, _, err := c.zkConn.Exists(c.tapestryPath)
-	if err != nil {
-		return err
-	}
-
-	if !tapestryExists {
-		_, err = c.zkConn.Create(c.tapestryPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (c *PuddleClient) findNextFreeFD() int {
 
 	// look through the open files array, find first empty index
