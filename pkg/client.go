@@ -430,14 +430,14 @@ func (c *PuddleClient) Remove(path string) error {
 		}
 
 	} else {
-		return err
+		return errors.New("remove: file/dir does not exist")
 	}
 
 	return nil
 }
 
 // list file & directory names (not full names) under `path`
-func (c *PuddleClient) List(path string) ([]string, error) {
+func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths error here! i think
 
 	// search for path in zookeeper
 	exists, _, err := c.zkConn.Exists(c.fsPath + path)
