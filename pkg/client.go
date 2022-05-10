@@ -151,7 +151,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 	} else {
 		// get the inode from zookeeper
-		data, _, err := c.zkConn.Get(c.fsPath + path)
+		inodeBuf, _, err := c.zkConn.Get(c.fsPath + path)
 
 		if err != nil {
 			distlock.Release()
@@ -159,7 +159,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		}
 
 		// unmarshal the inode
-		newFileinode, err = decodeInode(data) // contains existing inode data
+		newFileinode, err = decodeInode(inodeBuf) // contains existing inode data
 
 		if err != nil {
 			distlock.Release()
