@@ -17,24 +17,23 @@ func TestList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = client.Open("/test0", false, false)
+	_, err = client.Open("/test0", true, false)
 
 	// should not be nil
-	if err == nil {
+	if err != nil {
 		t.Fatal("should have err - no create")
 	}
 
-	_, err = client.Open("/test1", false, false)
+	_, err = client.Open("/test1", true, false)
 
 	// should not be nil
-	if err == nil {
+	if err != nil {
 		t.Fatal("should have err - no create")
 	}
 
-	lst, err := client.List("")
+	lst, err := client.List("/test1")
 
-	// should not be nil
-	if err == nil || len(lst) != 0 {
+	if err != nil || len(lst) == 0 {
 		t.Fatal("should have err - no list")
 	}
 

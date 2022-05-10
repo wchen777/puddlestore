@@ -96,16 +96,13 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		return -1, err
 	}
 
-	fmt.Println("open: ", path)
-
 	// create lock for file
-	// if file doesn't exist, establish this in /lock path
 	if !lockExists {
-		_, err = c.zkConn.Create(LOCK_ROOT+path, []byte(""), 0, zk.WorldACL(zk.PermAll))
 
-		if err != nil {
-			return -1, err
-		}
+		// if creating lock fails, this means directory path does not exist
+		// so, no need to create lock.
+		// example: /path/file will fail if /path does not exist.
+		c.zkConn.Create(LOCK_ROOT+path, []byte(""), 0, zk.WorldACL(zk.PermAll))
 	}
 
 	distlock := CreateDistLock(LOCK_ROOT+path, c.zkConn)
@@ -557,7 +554,7 @@ func (c *PuddleClient) Remove(path string) error {
 
 		} else {
 
-			distLock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
+			distLock := CreateDistLock(LOCK_ROOT+path, c.zkConn)
 
 			distLock.Acquire()
 
@@ -696,7 +693,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 
 			// once all those are removed, acquire lock and delete this directory
 
-			distLock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
+			distLock := CreateDistLock(LOCK_ROOT+path, c.zkConn)
 
 			distLock.Acquire()
 
@@ -708,7 +705,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 
 			// if file, acquire lock and delete
 
-			distLock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
+			distLock := CreateDistLock(LOCK_ROOT+path, c.zkConn)
 
 			distLock.Acquire()
 
