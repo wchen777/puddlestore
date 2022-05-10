@@ -6,7 +6,6 @@ import (
 
 	// "sort"
 
-	"fmt"
 	"sort"
 	"strings"
 
@@ -77,8 +76,6 @@ func (d *DistLock) Acquire() (err error) {
 	// locks /dir/lock-
 	path, err := d.zkConn.Create(d.lockRoot+lockPrefix, []byte(""), zk.FlagSequence|zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 
-	fmt.Println("path: %s", path)
-
 	if err != nil {
 		return err
 	}
@@ -92,20 +89,7 @@ func (d *DistLock) Acquire() (err error) {
 		// puddlestore concern:
 		// children on \a with dir \a\b will give us:
 		// \a\lock-..., as well as \a\b elements...
-		unfiltChil, _, err := d.zkConn.Children(d.lockRoot)
-		fmt.Printf("children %s\n", unfiltChil)
-
-		// filter non lock children
-		var chil []string
-
-		for _, s := range unfiltChil {
-
-			// if lock root AND has lock prefix, add to new list
-			// ignore children that are NOT locks of root dir(root + \lock-).
-			if strings.HasPrefix(s, (d.lockRoot + lockPrefix)) {
-				chil = append(chil, s)
-			}
-		}
+		chil, _, err := d.zkConn.Children(d.lockRoot)
 
 		if err != nil {
 			return err

@@ -89,19 +89,33 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	// clean path to remove trailing dir.
 	path = strings.TrimSuffix(path, "/")
 
-	fmt.Println("open: ", path)
-
-	// search for the file path metadata in zookeeper
-	fileExists, _, err := c.zkConn.Exists(c.fsPath + path)
+	// search for lock
+	lockExists, _, err := c.zkConn.Exists(LOCK_ROOT + path)
 
 	if err != nil {
 		return -1, err
 	}
 
 	// create lock for file
-	distlock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
+	if !lockExists {
+
+		// if creating lock fails, this means directory path does not exist
+		// so, no need to create lock.
+		// example: /path/file will fail if /path does not exist.
+		c.zkConn.Create(LOCK_ROOT+path, []byte(""), 0, zk.WorldACL(zk.PermAll))
+	}
+
+	distlock := CreateDistLock(LOCK_ROOT+path, c.zkConn)
 
 	distlock.Acquire()
+
+	// search for the file path metadata in zookeeper once we get lock.
+	fileExists, _, err := c.zkConn.Exists(c.fsPath + path)
+
+	if err != nil {
+		return -1, err
+	}
+
 	fmt.Printf("here\n")
 
 	var newFileinode *inode
@@ -518,7 +532,7 @@ func (c *PuddleClient) Remove(path string) error {
 
 			// once all those are removed, acquire lock and delete this directory
 
-			distLock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
+			distLock := CreateDistLock(LOCK_ROOT+path, c.zkConn)
 
 			distLock.Acquire()
 
@@ -532,7 +546,7 @@ func (c *PuddleClient) Remove(path string) error {
 
 		} else {
 
-			distLock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
+			distLock := CreateDistLock(LOCK_ROOT+path, c.zkConn)
 
 			distLock.Acquire()
 
@@ -666,7 +680,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 
 			// once all those are removed, acquire lock and delete this directory
 
-			distLock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
+			distLock := CreateDistLock(LOCK_ROOT+path, c.zkConn)
 
 			distLock.Acquire()
 
@@ -678,7 +692,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 
 			// if file, acquire lock and delete
 
-			distLock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
+			distLock := CreateDistLock(LOCK_ROOT+path, c.zkConn)
 
 			distLock.Acquire()
 
