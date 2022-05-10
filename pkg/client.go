@@ -247,7 +247,7 @@ func (c *PuddleClient) Close(fd int) error {
 			openFile.FileLock.Release()
 
 			// close conn
-			c.zkConn.Close()
+			// c.zkConn.Close()
 
 			return err
 		}
@@ -259,7 +259,7 @@ func (c *PuddleClient) Close(fd int) error {
 			openFile.FileLock.Release()
 
 			// close conn
-			c.zkConn.Close()
+			// c.zkConn.Close()
 
 			return err
 		}
@@ -303,7 +303,7 @@ func (c *PuddleClient) Close(fd int) error {
 		if err != nil {
 			openFile.FileLock.Release()
 			// close conn
-			c.zkConn.Close()
+			// c.zkConn.Close()
 			return err
 		}
 
