@@ -307,7 +307,7 @@ func (c *PuddleClient) Close(fd int) error {
 				return err
 			}
 
-			fmt.Printf("stored %s\n", dataBlock)
+			// fmt.Printf("stored %s\n", dataBlock)
 
 			client.Store(newUID.String(), dataBlock)
 
