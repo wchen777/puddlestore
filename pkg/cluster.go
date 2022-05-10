@@ -20,6 +20,7 @@ const FS_ROOT = "/puddlestore"
 const TAP_ADDRESS_ROOT = "/tapestry"
 
 const CLIENT_OPEN_FILES_LIMIT = 256
+const SEED = 4444
 
 // TODO: HASHING FUNCTION FOR LOAD BALANCING, consistent hashing, round robin, etc.
 func (c *Cluster) HashClientIDToTapNode(clientID string) *Tapestry {
@@ -73,8 +74,12 @@ func CreateCluster(config Config) (*Cluster, error) {
 	// try and establish a new connection
 	conn, err := ConnectZk(config.ZkAddr)
 
+	if err != nil {
+		return nil, err
+	}
+
 	// create random set of tapestries of count config.NumTapestry
-	randNodes, err := tapestry.MakeRandomTapestries(4444, config.NumTapestry)
+	randNodes, err := tapestry.MakeRandomTapestries(SEED, config.NumTapestry)
 
 	var nodes []*Tapestry
 
