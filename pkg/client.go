@@ -675,6 +675,8 @@ func (c *PuddleClient) getRandomTapestryNode() (string, error) {
 	// select random node to connect to
 	selectedNode := nodes[r.Intn(len(nodes))]
 
+	fmt.Println("Selected node path: ", selectedNode)
+
 	return selectedNode, nil // TODO: do we need to append tapestry path here?
 }
 
