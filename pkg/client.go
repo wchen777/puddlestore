@@ -115,6 +115,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 				Filepath: path,                 // this is the path of the file in the actual filesystem
 				Size:     0,                    // this is the size of the file in bytes (starts as empty)
 				Blocks:   make([]uuid.UUID, 0), // this is the list of data blocks (each block is a uuid that represents an entry in tapestry)
+				IsDir:    false,                // this is the flag that indicates if the file is a directory
 			}
 
 			// marshal the inode to bytes
@@ -127,8 +128,13 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			}
 
 			// create the file metadata in zookeeper, should be neither sequential nor ephemeral
-			c.zkConn.Create(c.fsPath+path, inodeBuffer, 0, zk.WorldACL(zk.PermAll))
+			_, err = c.zkConn.Create(c.fsPath+path, inodeBuffer, 0, zk.WorldACL(zk.PermAll))
 
+			if err != nil { // create fails
+				// release the lock
+				distlock.Release()
+				return -1, err
+			}
 		}
 
 	} else {
@@ -213,6 +219,14 @@ func (c *PuddleClient) Close(fd int) error {
 	}
 
 	fmt.Println("close: ", openFile.INode.Filepath)
+
+	exists, _, _ := c.zkConn.Exists(c.fsPath + openFile.INode.Filepath)
+
+	if exists {
+		fmt.Println("close path exists in zookeeper")
+	} else {
+		fmt.Println("close path does not exist in zookeeper")
+	}
 
 	// check dirty files set
 	if c.dirtyFiles[fd] {
