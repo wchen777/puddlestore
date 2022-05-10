@@ -284,11 +284,10 @@ func (c *PuddleClient) Close(fd int) error {
 			return err
 		}
 
+		fmt.Println("close zk path: " + c.fsPath + openFile.INode.Filepath)
+
 		// write back the inode in zookeeper
 		c.zkConn.Set(c.fsPath+openFile.INode.Filepath, inodeBuf, -1)
-
-		// clear fd
-		c.openFiles[fd] = nil
 
 		// remove the file from the dirty files set
 		delete(c.dirtyFiles, fd)
@@ -296,6 +295,9 @@ func (c *PuddleClient) Close(fd int) error {
 
 	// release lock.
 	openFile.FileLock.Release()
+
+	// clear fd
+	c.openFiles[fd] = nil
 
 	return nil
 }
@@ -488,6 +490,14 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 
 // release zk connection
 func (c *PuddleClient) Exit() {
+	// close all file descriptors
+	for i, openFile := range c.openFiles {
+		if openFile != nil {
+			c.Close(i)
+		}
+	}
+
+	// close zk connection
 	c.zkConn.Close()
 }
 
