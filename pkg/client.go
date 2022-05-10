@@ -292,6 +292,8 @@ func (c *PuddleClient) Close(fd int) error {
 			// create new uuid, store into tapestry uuid associated with block
 			newUID := uuid.New()
 
+			fmt.Printf("stored %s\n", dataBlock)
+
 			client.Store(newUID.String(), dataBlock)
 
 			// add to array of newuids to replace old in inode.
