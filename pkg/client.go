@@ -692,7 +692,7 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 		return nil, err
 	}
 
-	var tapNode TapestryAddrNode
+	var tapNode *TapestryAddrNode
 	err = decodeMsgPack(toDecode, tapNode) // populates tapNode with addr
 
 	if err != nil {
