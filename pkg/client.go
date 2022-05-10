@@ -573,6 +573,8 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 			return nil, err
 		}
 
+		fmt.Printf("inode: %v\n", inode)
+
 		// if directory, print out subdirectories
 		// otherwise, print out file.
 		if inode.IsDir {
@@ -591,7 +593,7 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 			output = append(output, path[strings.LastIndex(path, "/")+1:])
 		}
 
-		fmt.Printf("%v\n", output)
+		fmt.Printf("output list t%v\n", output)
 
 		return output, nil
 
