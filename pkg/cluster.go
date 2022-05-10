@@ -142,8 +142,23 @@ func (c *Cluster) Shutdown() {
 // initializes the zookeeper internal file system and locks directory paths
 func initPaths(c *zk.Conn) error {
 
+	// create the inode
+	newFileinode := &inode{
+		Filepath: FS_ROOT,              // this is the path of the file in the actual filesystem
+		Size:     0,                    // this is the size of the file in bytes (starts as empty)
+		Blocks:   make([]uuid.UUID, 0), // this is the list of data blocks (each block is a uuid that represents an entry in tapestry)
+		IsDir:    true,                 // this is the flag that indicates if the file is a directory
+	}
+
+	// marshal the inode to bytes
+	inodeBuffer, err := encodeInode(*newFileinode)
+
+	if err != nil {
+		return err
+	}
+
 	// if fs path does not exist, create it
-	_, err := c.Create(FS_ROOT, []byte{}, 0, zk.WorldACL(zk.PermAll))
+	_, err = c.Create(FS_ROOT, inodeBuffer, 0, zk.WorldACL(zk.PermAll))
 
 	if err != nil {
 		return err
