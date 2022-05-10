@@ -299,6 +299,10 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 	// get open file
 	openFile := c.openFiles[fd]
 
+	if openFile == nil {
+		return nil, errors.New("read: file not open")
+	}
+
 	// get minimum of position to read to and size of file
 	endPos := size + offset
 	if endPos > openFile.INode.Size {
@@ -318,6 +322,10 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 
 	// get the open file
 	openFile := c.openFiles[fd]
+
+	if openFile == nil || !c.dirtyFiles[fd] {
+		return errors.New("write: file not open or not opened for writing")
+	}
 
 	endPos := offset + uint64(len(data)) // the final position of the data to be written
 
