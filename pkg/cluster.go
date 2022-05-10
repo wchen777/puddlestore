@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	"fmt"
+	"errors"
 	tapestry "tapestry/pkg"
 	"time"
 
@@ -115,9 +115,12 @@ func CreateCluster(config Config) (*Cluster, error) {
 			return nil, err
 		}
 
-		path, _ := conn.Create(TAP_ADDRESS_ROOT+"/node-", tapNodeBuffer.Bytes(), zk.FlagSequence, zk.WorldACL(zk.PermAll))
+		// what if tapestry nodes fail?
+		_, err = conn.Create(TAP_ADDRESS_ROOT+"/node-", tapNodeBuffer.Bytes(), zk.FlagSequence, zk.WorldACL(zk.PermAll))
 
-		fmt.Println("created tapestry node at path: ", path)
+		if err != nil {
+			return nil, errors.New("failed to create tapestry node: " + err.Error())
+		}
 
 	}
 
