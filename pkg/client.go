@@ -196,6 +196,8 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			data = append(data, blockData...) // i'm getting a linter warning here??
 		}
 
+		fmt.Println("data after open: ", data)
+
 	}
 
 	// get next client file descriptor
