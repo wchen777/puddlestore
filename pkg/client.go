@@ -335,6 +335,25 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 // create a directory at the specified path
 func (c *PuddleClient) Mkdir(path string) error {
 	// should just be a zookeeper create call?
+
+	// create local inode
+	newDirINode := &inode{
+		Filepath: path,
+		IsDir:    true,
+		Blocks:   []uuid.UUID{},
+		Size:     0,
+	}
+
+	// marshal the inode to bytes
+	inodeBuf, err := encodeInode(*newDirINode)
+
+	if err != nil {
+		return err
+	}
+
+	// create the directory in zookeeper
+	c.zkConn.Create(c.fsPath+"/"+path, inodeBuf, 0, zk.WorldACL(zk.PermAll))
+
 	return nil
 }
 
