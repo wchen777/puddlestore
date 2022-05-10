@@ -573,8 +573,6 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 			return nil, err
 		}
 
-		fmt.Printf("inode: %v\n", inode)
-
 		// if directory, print out subdirectories
 		// otherwise, print out file.
 		if inode.IsDir {
@@ -582,8 +580,6 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 			// grab children of this directory
 			// CONCERN: may return locks on this directory too? do we filter? or should we output?
 			output, _, err = c.zkConn.Children(c.fsPath + path)
-
-			fmt.Printf("output list: %v", output)
 
 			if err != nil {
 				return nil, err
