@@ -109,6 +109,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	if !fileExists { // if the file metadata does not exist in the zookeeper fs
 
 		if !create { // if we are not creating and the file does not exist, return error
+			fmt.Printf("open: doesn't exist\n")
 			distlock.Release()
 			return -1, zk.ErrNoNode
 		} else { // otherwise create the file
@@ -586,6 +587,8 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 			// not directory, simply output file name(path/to/file --> file)
 			output = append(output, path[strings.LastIndex(path, "/")+1:])
 		}
+
+		fmt.Printf("%v\n", output)
 
 		return output, nil
 
