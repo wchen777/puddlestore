@@ -186,6 +186,9 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			return -1, err
 		}
 
+		data = make([]byte, newFileinode.Size) // create buffer to store file data
+		writePtr := 0                          // write pointer
+
 		// get the file data from tapestry, loop through block uuids and get the data from tapestry
 		for _, blockUUID := range newFileinode.Blocks {
 			blockData, err := client.Get(blockUUID.String())
@@ -196,7 +199,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			}
 
 			// fill data byte array
-			data = append(data, blockData...) // i'm getting a linter warning here??
+			writePtr += copy(data[writePtr:], blockData) // i'm getting a linter warning here??
 		}
 
 		fmt.Println("data after open: ", data)
