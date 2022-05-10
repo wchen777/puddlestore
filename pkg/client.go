@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-zookeeper/zk"
 	uuid "github.com/google/uuid"
+	"github.com/tmthrgd/go-memset"
 )
 
 // Client is a puddlestore client interface that will communicate with puddlestore nodes
@@ -110,6 +111,14 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			return -1, zk.ErrNoNode
 		} else { // otherwise create the file
 
+			// first check  parent
+			parentNodeIsDir := c.isParentINodeDir(path)
+
+			if !parentNodeIsDir {
+				distlock.Release()
+				return -1, errors.New("open: parent is not a directory")
+			}
+
 			// create the inode
 			newFileinode = &inode{
 				Filepath: path,                 // this is the path of the file in the actual filesystem
@@ -152,6 +161,12 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		if err != nil {
 			distlock.Release()
 			return -1, err
+		}
+
+		// if the file is a directory, return error
+		if newFileinode.IsDir {
+			distlock.Release()
+			return -1, errors.New("open: file is a directory")
 		}
 
 		// READ THE FILE DATA FROM TAPESTRY USING BLOCKS FOUND IN INODE
@@ -240,7 +255,7 @@ func (c *PuddleClient) Close(fd int) error {
 			openFile.FileLock.Release()
 
 			// close conn
-			c.zkConn.Close()
+			// c.zkConn.Close()
 
 			return err
 		}
@@ -252,7 +267,7 @@ func (c *PuddleClient) Close(fd int) error {
 			openFile.FileLock.Release()
 
 			// close conn
-			c.zkConn.Close()
+			// c.zkConn.Close()
 
 			return err
 		}
@@ -287,8 +302,8 @@ func (c *PuddleClient) Close(fd int) error {
 		// here: done populating tap with newuids <--> blocks
 		// replace inode uids with new
 		openFile.INode.Blocks = newUIDs
-		// update size
-		openFile.INode.Size = uint64(len(openFile.Data))
+		// // update size
+		// openFile.INode.Size = uint64(len(openFile.Data))
 
 		// marshal the inode to bytes
 		inodeBuf, err := encodeInode(*openFile.INode)
@@ -296,7 +311,7 @@ func (c *PuddleClient) Close(fd int) error {
 		if err != nil {
 			openFile.FileLock.Release()
 			// close conn
-			c.zkConn.Close()
+			// c.zkConn.Close()
 			return err
 		}
 
@@ -321,11 +336,17 @@ func (c *PuddleClient) Close(fd int) error {
 // read a file and return a buffer of size `size` starting at `offset`
 func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 
+	fmt.Println("read (offset, size): ", offset, size)
+
 	// get open file
 	openFile := c.openFiles[fd]
 
 	if openFile == nil {
 		return nil, errors.New("read: file not open")
+	}
+
+	if offset >= openFile.INode.Size || openFile.INode.Size == 0 {
+		return []byte{}, nil
 	}
 
 	// get minimum of position to read to and size of file
@@ -343,6 +364,8 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 // write a file and write `data` starting at `offset`
 func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 
+	fmt.Println("write (offset, data len): ", offset, len(data))
+
 	// remember to modify the inode data stored locally on each write, flush to zookeeper on close
 
 	// get the open file
@@ -354,13 +377,31 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 
 	endPos := offset + uint64(len(data)) // the final position of the data to be written
 
-	if endPos >= openFile.INode.Size { // if the end of the write is at or beyond the end of the file
-		openFile.Data = append(openFile.Data[:offset], data...) // overwrite everything past the end
-		openFile.INode.Size = endPos                            // update the size of the file
-	} else { // otherwise we have a chunk of file leftover that we need to append, no need to update size
-		half := append(data, openFile.Data[endPos:]...)         // second half of the newly modified file
-		openFile.Data = append(openFile.Data[:offset], half...) // is there a more efficient way to do this?
+	// if the end position is beyond the size of the file, set the size
+	if endPos > openFile.INode.Size {
+		openFile.INode.Size = endPos
 	}
+
+	// create a new buffer to hold the new data equal to the size of the file
+	newData := make([]byte, openFile.INode.Size)
+
+	memset.Memset(newData, 0) // zero out the new data
+
+	// copy the old data into the new buffer
+	copy(newData, openFile.Data)
+
+	// overwrite offset -> offset + len(data) with the new data
+	copy(newData[offset:], data)
+
+	openFile.Data = newData
+
+	// if endPos >= openFile.INode.Size { // if the end of the write is at or beyond the end of the file
+	// 	openFile.Data = append(openFile.Data[:offset], data...) // overwrite everything past the end
+	// 	openFile.INode.Size = endPos                            // update the size of the file
+	// } else { // otherwise we have a chunk of file leftover that we need to append, no need to update size
+	// 	half := append(data, openFile.Data[endPos:]...)         // second half of the newly modified file
+	// 	openFile.Data = append(openFile.Data[:offset], half...) // is there a more efficient way to do this?
+	// }
 
 	return nil
 }
@@ -371,6 +412,19 @@ func (c *PuddleClient) Mkdir(path string) error {
 
 	// STEPS:
 	// check the parent dir exists, and is a valid directory (not a file)
+	// check if the path already exists
+
+	parentNodeIsDir := c.isParentINodeDir(path)
+
+	if !parentNodeIsDir {
+		return errors.New("mkdir: parent is not a directory")
+	}
+
+	// check if the path already exists
+	exists, _, _ := c.zkConn.Exists(c.fsPath + path)
+	if exists {
+		return errors.New("mkdir: path already exists")
+	}
 
 	// create local inode
 	newDirINode := &inode{
@@ -705,5 +759,32 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 
 	// connects to tap belonging to inode.addr (which is addr of tap node)
 	return tapestry.Connect(tapNode.Addr)
+
+}
+
+func (c *PuddleClient) isParentINodeDir(path string) bool {
+
+	lastInd := strings.LastIndex(path, "/")
+
+	// fmt.Println("parent node dir last ind: ", lastInd)
+
+	if lastInd <= 0 { // root dir
+		return true
+	}
+
+	// get the string until the last / from path, otherwise
+	parentPath := path[:lastInd]
+
+	// get the inode from zookeeper
+	data, _, err := c.zkConn.Get(c.fsPath + parentPath)
+
+	if err != nil {
+		return false
+	}
+
+	// unmarshal the inode
+	newFileinode, _ := decodeInode(data)
+
+	return newFileinode.IsDir
 
 }
