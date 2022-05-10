@@ -554,7 +554,7 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 		return nil, err
 	}
 
-	fmt.Printf("List One here\n")
+	fmt.Printf("List One here %s\n", (c.fsPath + path))
 
 	var output []string
 
