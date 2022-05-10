@@ -111,6 +111,19 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			return -1, zk.ErrNoNode
 		} else { // otherwise create the file
 
+			// first check  parent
+			parentNode, err := c.getParentINode(path)
+
+			if err != nil {
+				distlock.Release()
+				return -1, err
+			}
+
+			if !parentNode.IsDir {
+				distlock.Release()
+				return -1, errors.New("open: parent is not a directory")
+			}
+
 			// create the inode
 			newFileinode = &inode{
 				Filepath: path,                 // this is the path of the file in the actual filesystem
@@ -328,6 +341,8 @@ func (c *PuddleClient) Close(fd int) error {
 // read a file and return a buffer of size `size` starting at `offset`
 func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 
+	fmt.Println("read (offset, size): ", offset, size)
+
 	// get open file
 	openFile := c.openFiles[fd]
 
@@ -335,7 +350,7 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 		return nil, errors.New("read: file not open")
 	}
 
-	if offset >= openFile.INode.Size {
+	if offset >= openFile.INode.Size || openFile.INode.Size == 0 {
 		return []byte{}, nil
 	}
 
@@ -400,6 +415,16 @@ func (c *PuddleClient) Mkdir(path string) error {
 
 	// STEPS:
 	// check the parent dir exists, and is a valid directory (not a file)
+
+	parentNode, err := c.getParentINode(path)
+
+	if err != nil {
+		return err
+	}
+
+	if !parentNode.IsDir {
+		return errors.New("mkdir: parent is not a directory")
+	}
 
 	// create local inode
 	newDirINode := &inode{
@@ -730,5 +755,23 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 
 	// connects to tap belonging to inode.addr (which is addr of tap node)
 	return tapestry.Connect(tapNode.Addr)
+
+}
+
+func (c *PuddleClient) getParentINode(path string) (*inode, error) {
+	// get the string until the last / from path
+	parentPath := path[:strings.LastIndex(path, "/")]
+
+	// get the inode from zookeeper
+	data, _, err := c.zkConn.Get(c.fsPath + parentPath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// unmarshal the inode
+	newFileinode, _ := decodeInode(data)
+
+	return newFileinode, nil
 
 }
