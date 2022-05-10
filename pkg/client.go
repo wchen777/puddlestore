@@ -666,10 +666,10 @@ func (c *PuddleClient) getRandomTapestryNode() (string, error) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano())) // seed with current time
 
 	// get children of tapestry/node- to get tap nodes
-	nodes, _, err := c.zkConn.Children(c.tapestryPath + "/node-")
+	nodes, _, err := c.zkConn.Children(c.tapestryPath)
 
 	if err != nil {
-		fmt.Println("error getting children of tapestry/node-")
+		fmt.Println("error getting children of tapestry/node-" + err.Error())
 		return "", err
 	}
 
