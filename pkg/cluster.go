@@ -119,7 +119,7 @@ func CreateCluster(config Config) (*Cluster, error) {
 		}
 
 		// what if tapestry nodes fail?
-		_, err = conn.Create(TAP_ADDRESS_ROOT+"/node-", tapNodeBuffer.Bytes(), zk.FlagSequence, zk.WorldACL(zk.PermAll))
+		_, err = conn.Create(TAP_ADDRESS_ROOT+"/node-", tapNodeBuffer.Bytes(), zk.FlagSequence|zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 
 		if err != nil {
 			return nil, errors.New("failed to create tapestry node: " + err.Error())
