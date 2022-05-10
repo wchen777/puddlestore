@@ -553,6 +553,10 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 		return nil, err
 	}
 
+	fmt.Printf("List One here\n")
+
+	var output []string
+
 	if exists {
 
 		// get the inode from zookeeper
@@ -561,8 +565,6 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 		if err != nil {
 			return nil, err
 		}
-
-		var output []string
 
 		// if directory, print out subdirectories
 		// otherwise, print out file.
@@ -585,7 +587,10 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 		return output, nil
 
 	} else {
-		return nil, errors.New("List returned nothing")
+
+		fmt.Printf("List Two ERROR here\n")
+
+		return output, errors.New("List returned nothing")
 	}
 }
 
