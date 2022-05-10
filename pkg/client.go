@@ -96,7 +96,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	}
 
 	// create lock for file
-	distlock := CreateDistLock(c.fsPath+path, c.zkConn)
+	distlock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
 
 	distlock.Acquire()
 
@@ -483,25 +483,29 @@ func (c *PuddleClient) Remove(path string) error {
 
 			// once all those are removed, acquire lock and delete this directory
 
-			distLock := CreateDistLock(c.fsPath+path, c.zkConn)
+			distLock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
 
 			distLock.Acquire()
 
-			c.zkConn.Delete(c.fsPath+path, -1)
+			err = c.zkConn.Delete(c.fsPath+path, -1)
+
+			if err != nil {
+				return err
+			}
 
 			distLock.Release()
 
 		} else {
 
-			// if file, acquire lock and delete
-
-			// TODO: check if file is open?, handle this case here (we already have the lock?, remove from open files?)
-
-			distLock := CreateDistLock(c.fsPath+path, c.zkConn)
+			distLock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
 
 			distLock.Acquire()
 
-			c.zkConn.Delete(c.fsPath+path, -1)
+			err = c.zkConn.Delete(c.fsPath+path, -1)
+
+			if err != nil {
+				return err
+			}
 
 			distLock.Release()
 
@@ -556,7 +560,7 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 		return output, nil
 
 	} else {
-		return nil, err
+		return nil, errors.New("List returned nothing")
 	}
 }
 
@@ -668,7 +672,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 
 			// once all those are removed, acquire lock and delete this directory
 
-			distLock := CreateDistLock(c.fsPath+path, c.zkConn)
+			distLock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
 
 			distLock.Acquire()
 
@@ -680,7 +684,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 
 			// if file, acquire lock and delete
 
-			distLock := CreateDistLock(c.fsPath+path, c.zkConn)
+			distLock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
 
 			distLock.Acquire()
 
