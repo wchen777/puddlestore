@@ -212,6 +212,8 @@ func (c *PuddleClient) Close(fd int) error {
 		return errors.New("close: file not open")
 	}
 
+	fmt.Println("close: ", openFile.INode.Filepath)
+
 	// check dirty files set
 	if c.dirtyFiles[fd] {
 		// flush the file
