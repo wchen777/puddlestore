@@ -292,11 +292,17 @@ func (c *PuddleClient) Close(fd int) error {
 			dataBlock := openFile.Data[i:end]
 
 			// create new uuid, store into tapestry uuid associated with block
-			newUID := uuid.New()
+			newUID, err := uuid.NewRandom()
+
+			if err != nil {
+				return err
+			}
 
 			fmt.Printf("stored %s\n", dataBlock)
 
 			client.Store(newUID.String(), dataBlock)
+
+			fmt.Printf("id %s\n", newUID)
 
 			// add to array of newuids to replace old in inode.
 			newUIDs = append(newUIDs, newUID)
@@ -304,6 +310,7 @@ func (c *PuddleClient) Close(fd int) error {
 
 		// here: done populating tap with newuids <--> blocks
 		// replace inode uids with new
+		fmt.Printf("all ids %v\n", newUIDs)
 		openFile.INode.Blocks = newUIDs
 		// // update size
 		// openFile.INode.Size = uint64(len(openFile.Data))
