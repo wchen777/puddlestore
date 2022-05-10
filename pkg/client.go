@@ -262,6 +262,8 @@ func (c *PuddleClient) Close(fd int) error {
 		return errors.New("close: file not open")
 	}
 
+	defer openFile.FileLock.Release()
+
 	fmt.Println("close: ", openFile.INode.Filepath)
 
 	exists, _, _ := c.zkConn.Exists(c.fsPath + openFile.INode.Filepath)
@@ -281,10 +283,6 @@ func (c *PuddleClient) Close(fd int) error {
 
 		if err != nil {
 			// release lock.
-			openFile.FileLock.Release()
-
-			// close conn
-			// c.zkConn.Close()
 
 			return err
 		}
@@ -293,10 +291,6 @@ func (c *PuddleClient) Close(fd int) error {
 
 		if err != nil {
 			// release lock.
-			openFile.FileLock.Release()
-
-			// close conn
-			// c.zkConn.Close()
 
 			return err
 		}
@@ -327,6 +321,7 @@ func (c *PuddleClient) Close(fd int) error {
 			newUID, err := uuid.NewRandom()
 
 			if err != nil {
+				// release lock.
 				return err
 			}
 
@@ -351,7 +346,6 @@ func (c *PuddleClient) Close(fd int) error {
 		inodeBuf, err := encodeInode(*openFile.INode)
 
 		if err != nil {
-			openFile.FileLock.Release()
 			// close conn
 			// c.zkConn.Close()
 			return err
@@ -365,9 +359,6 @@ func (c *PuddleClient) Close(fd int) error {
 		// remove the file from the dirty files set
 		delete(c.dirtyFiles, fd)
 	}
-
-	// release lock.
-	openFile.FileLock.Release()
 
 	// clear fd
 	c.openFiles[fd] = nil
