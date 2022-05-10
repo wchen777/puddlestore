@@ -1,0 +1,33 @@
+syntax = "proto3";
+package pkg;
+
+option go_package = "pkg/pkg"; // ???
+
+message Success {
+    bool ok = 1;
+}
+
+message ClientID {
+    string id = 1;
+}
+
+message Empty {}
+
+
+service PuddleStore {
+
+    rpc Connect(Empty) returns (ClientID);
+
+    rpc Disconnect(ClientID) returns (Success);
+
+
+    // rpc Send(ChatMessage) returns (Success);
+
+
+    // rpc Fetch(Empty) returns (ChatMessages);
+
+    // rpc List(Empty) returns (UserList);
+
+
+}
+
