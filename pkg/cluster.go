@@ -79,6 +79,9 @@ func CreateCluster(config Config) (*Cluster, error) {
 		return nil, err
 	}
 
+	// create tapestry root path
+	conn.Create(TAP_ADDRESS_ROOT, []byte{}, 0, zk.WorldACL(zk.PermAll))
+
 	// create random set of tapestries of count config.NumTapestry
 	randNodes, err := tapestry.MakeRandomTapestries(SEED, config.NumTapestry)
 
