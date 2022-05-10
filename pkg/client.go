@@ -208,6 +208,10 @@ func (c *PuddleClient) Close(fd int) error {
 	// open file
 	openFile := c.openFiles[fd]
 
+	if openFile == nil {
+		return errors.New("close: file not open")
+	}
+
 	// check dirty files set
 	if c.dirtyFiles[fd] {
 		// flush the file
@@ -283,15 +287,15 @@ func (c *PuddleClient) Close(fd int) error {
 		// write back the inode in zookeeper
 		c.zkConn.Set(c.fsPath+openFile.INode.Filepath, inodeBuf, -1)
 
-		// release lock.
-		openFile.FileLock.Release()
-
 		// clear fd
 		c.openFiles[fd] = nil
 
 		// remove the file from the dirty files set
 		delete(c.dirtyFiles, fd)
 	}
+
+	// release lock.
+	openFile.FileLock.Release()
 
 	return nil
 }
