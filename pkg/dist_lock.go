@@ -77,7 +77,7 @@ func (d *DistLock) Acquire() (err error) {
 	// locks /dir/lock-
 	path, err := d.zkConn.Create(d.lockRoot+lockPrefix, []byte(""), zk.FlagSequence|zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 
-	fmt.Println("path: %s", path)
+	fmt.Printf("path: %s\n", path)
 
 	if err != nil {
 		return err
