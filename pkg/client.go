@@ -72,7 +72,6 @@ type PuddleClient struct {
 	ID        string
 	zkConn    *zk.Conn
 	openFiles []*OpenFile // map from file descriptor to inode, represented as an array of inodes (each fd is an index in the array)
-
 	// lock states field here, best way to store read and write locks associated with an inode?
 
 	fsPath       string // file system path prefix within zookeeper, e.g. /puddlestore
