@@ -348,6 +348,8 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 		return []byte{}, nil
 	}
 
+	fmt.Println("read data:" + string(openFile.Data))
+
 	// get minimum of position to read to and size of file
 	endPos := size + offset
 	if endPos > openFile.INode.Size {
