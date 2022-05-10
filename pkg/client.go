@@ -154,6 +154,12 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			return -1, err
 		}
 
+		// if the file is a directory, return error
+		if newFileinode.IsDir {
+			distlock.Release()
+			return -1, errors.New("open: file is a directory")
+		}
+
 		// READ THE FILE DATA FROM TAPESTRY USING BLOCKS FOUND IN INODE
 		selectedNode, err := c.getRandomTapestryNode() // get tapestry node path of random node
 
@@ -287,8 +293,8 @@ func (c *PuddleClient) Close(fd int) error {
 		// here: done populating tap with newuids <--> blocks
 		// replace inode uids with new
 		openFile.INode.Blocks = newUIDs
-		// update size
-		openFile.INode.Size = uint64(len(openFile.Data))
+		// // update size
+		// openFile.INode.Size = uint64(len(openFile.Data))
 
 		// marshal the inode to bytes
 		inodeBuf, err := encodeInode(*openFile.INode)
