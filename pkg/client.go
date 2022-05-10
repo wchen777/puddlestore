@@ -574,6 +574,9 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 	if exists {
 
 		// get the inode from zookeeper
+
+		fmt.Printf("before get inode")
+
 		inode, err := c.getINode(path)
 
 		if err != nil {
@@ -702,12 +705,15 @@ func (c *PuddleClient) removeDir(paths []string) error {
 func (c *PuddleClient) getINode(path string) (*inode, error) {
 
 	// get the inode from zookeeper
+	fmt.Printf("get inode data\n")
+
 	data, _, err := c.zkConn.Get(c.fsPath + path)
 
 	if err != nil {
 		return nil, err
 	}
 
+	fmt.Printf("get decode inode data\n")
 	// unmarshal the inode
 	newFileinode, err := decodeInode(data)
 	if err != nil {
