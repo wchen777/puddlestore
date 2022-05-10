@@ -222,6 +222,8 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		FileLock: distlock,
 	}
 
+	fmt.Println("open: open file data: ", c.openFiles[fd].Data)
+
 	// if we have specified write, add fd to dirty files (to be flushed on close)
 	if write {
 		c.dirtyFiles[fd] = true
@@ -357,6 +359,9 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 
 	// get open file
 	openFile := c.openFiles[fd]
+
+	// print out all of open file
+	fmt.Printf("read, open file data: %v", openFile)
 
 	if openFile == nil {
 		return nil, errors.New("read: file not open")
