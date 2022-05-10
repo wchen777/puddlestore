@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -85,8 +86,10 @@ type PuddleClient struct {
 // open a file and return a file descriptor, DOES THIS PATH START WITH A /?
 func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
+	fmt.Println("open: ", path)
+
 	// search for the file path metadata in zookeeper
-	fileExists, _, err := c.zkConn.Exists(c.fsPath + path)
+	fileExists, _, err := c.zkConn.Exists(c.fsPath + "/" + path)
 
 	if err != nil {
 		return -1, err
@@ -124,13 +127,13 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			}
 
 			// create the file metadata in zookeeper, should be neither sequential nor ephemeral
-			c.zkConn.Create(c.fsPath+path, inodeBuffer, 0, zk.WorldACL(zk.PermAll))
+			c.zkConn.Create(c.fsPath+"/"+path, inodeBuffer, 0, zk.WorldACL(zk.PermAll))
 
 		}
 
 	} else {
 		// get the inode from zookeeper
-		data, _, err := c.zkConn.Get(c.fsPath + path)
+		data, _, err := c.zkConn.Get(c.fsPath + "/" + path)
 
 		if err != nil {
 			distlock.Release()
@@ -278,7 +281,7 @@ func (c *PuddleClient) Close(fd int) error {
 		}
 
 		// write back the inode in zookeeper
-		c.zkConn.Set(c.fsPath+openFile.INode.Filepath, inodeBuf, -1)
+		c.zkConn.Set(c.fsPath+"/"+openFile.INode.Filepath, inodeBuf, -1)
 
 		// release lock.
 		openFile.FileLock.Release()
@@ -360,7 +363,7 @@ func (c *PuddleClient) Mkdir(path string) error {
 	}
 
 	// create the directory in zookeeper
-	c.zkConn.Create(c.fsPath+path, inodeBuf, 0, zk.WorldACL(zk.PermAll))
+	c.zkConn.Create(c.fsPath+"/"+path, inodeBuf, 0, zk.WorldACL(zk.PermAll))
 
 	return nil
 }
@@ -369,7 +372,7 @@ func (c *PuddleClient) Mkdir(path string) error {
 func (c *PuddleClient) Remove(path string) error {
 
 	// search for path in zookeeper
-	exists, _, err := c.zkConn.Exists(c.fsPath + path)
+	exists, _, err := c.zkConn.Exists(c.fsPath + "/" + path)
 
 	// TODO: check if file/dir
 	// ed explains how to handle both cases.
@@ -391,7 +394,7 @@ func (c *PuddleClient) Remove(path string) error {
 
 		if inode.IsDir {
 
-			subdirs, _, err := c.zkConn.Children(c.fsPath + path)
+			subdirs, _, err := c.zkConn.Children(c.fsPath + "/" + path)
 
 			if err != nil {
 				return nil
@@ -437,7 +440,7 @@ func (c *PuddleClient) Remove(path string) error {
 func (c *PuddleClient) List(path string) ([]string, error) {
 
 	// search for path in zookeeper
-	exists, _, err := c.zkConn.Exists(c.fsPath + path)
+	exists, _, err := c.zkConn.Exists(c.fsPath + "/" + path)
 
 	if err != nil {
 		return nil, err
@@ -460,7 +463,7 @@ func (c *PuddleClient) List(path string) ([]string, error) {
 
 			// grab children of this directory
 			// CONCERN: may return locks on this directory too? do we filter? or should we output?
-			output, _, err = c.zkConn.Children(c.fsPath + path)
+			output, _, err = c.zkConn.Children(c.fsPath + "/" + path)
 
 			if err != nil {
 				return nil, err
@@ -548,7 +551,7 @@ func (c *PuddleClient) findNextFreeFD() int {
 
 // helper function to return the tap addr from a client node, eg /tapestry/CLIENTUUID
 // func (c *PuddleClient) getFullTapestryAddrPath() string {
-// 	return c.tapestryPath + c.ID
+// 	return c.tapestryPath + "/" + c.ID
 // }
 
 // takes in children of directory we are removing
@@ -568,7 +571,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 
 			// like remove
 			// get children if directory, recursively remove all subdirectories
-			subdirs, _, err := c.zkConn.Children(c.fsPath + path)
+			subdirs, _, err := c.zkConn.Children(c.fsPath + "/" + path)
 
 			if err != nil {
 				return nil
@@ -609,7 +612,7 @@ func (c *PuddleClient) removeDir(paths []string) error {
 func (c *PuddleClient) getINode(path string) (*inode, error) {
 
 	// get the inode from zookeeper
-	data, _, err := c.zkConn.Get(c.fsPath + path)
+	data, _, err := c.zkConn.Get(c.fsPath + "/" + path)
 
 	if err != nil {
 		return nil, err
