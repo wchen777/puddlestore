@@ -64,7 +64,7 @@ type Client interface {
 
 type OpenFile struct {
 	INode    *inode
-	Data     *[]byte   // cached file block data, TODO: how do we get all the data in one place from tapestry blocks ?
+	Data     []byte    // cached file block data, TODO: how do we get all the data in one place from tapestry blocks ?
 	FileLock *DistLock // file lock
 }
 
@@ -218,7 +218,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	// add the file to the open files list
 	c.openFiles[fd] = &OpenFile{
 		INode:    newFileinode,
-		Data:     &data,
+		Data:     data,
 		FileLock: distlock,
 	}
 
@@ -286,17 +286,17 @@ func (c *PuddleClient) Close(fd int) error {
 		// keeps track of new uuids
 		var newUIDs []uuid.UUID
 
-		for i := 0; i < len(*openFile.Data); i += BLOCK_SIZE {
+		for i := 0; i < len(openFile.Data); i += BLOCK_SIZE {
 
 			end += BLOCK_SIZE
 
 			// prevents slice beyond boundary.
-			if end > len(*openFile.Data) {
-				end = len(*openFile.Data)
+			if end > len(openFile.Data) {
+				end = len(openFile.Data)
 			}
 
 			// new 4kb data
-			dataBlock := (*openFile.Data)[i:end]
+			dataBlock := openFile.Data[i:end]
 
 			// create new uuid, store into tapestry uuid associated with block
 			newUID, err := uuid.NewRandom()
@@ -366,8 +366,8 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 		return []byte{}, nil
 	}
 
-	fmt.Println("read data:" + string(*openFile.Data))
-	fmt.Println("read data len: " + fmt.Sprintf("%v", len(*openFile.Data)))
+	fmt.Println("read data:" + string(openFile.Data))
+	fmt.Println("read data len: " + fmt.Sprintf("%v", len(openFile.Data)))
 
 	// get minimum of position to read to and size of file
 	endPos := size + offset
@@ -376,7 +376,7 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 	}
 
 	// get the data from the file
-	data := (*openFile.Data)[offset:endPos]
+	data := openFile.Data[offset:endPos]
 
 	fmt.Println("READ RETURNED data:" + string(data))
 
@@ -410,12 +410,12 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 	memset.Memset(newData, 0) // zero out the new data
 
 	// copy the old data into the new buffer
-	copy(newData, *openFile.Data)
+	copy(newData, openFile.Data)
 
 	// overwrite offset -> offset + len(data) with the new data
 	copy(newData[offset:], data)
 
-	*openFile.Data = newData
+	openFile.Data = newData
 
 	// if endPos >= openFile.INode.Size { // if the end of the write is at or beyond the end of the file
 	// 	openFile.Data = append(openFile.Data[:offset], data...) // overwrite everything past the end
@@ -573,8 +573,6 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 			return nil, err
 		}
 
-		fmt.Printf("inode: %v\n", inode)
-
 		// if directory, print out subdirectories
 		// otherwise, print out file.
 		if inode.IsDir {
@@ -582,8 +580,6 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 			// grab children of this directory
 			// CONCERN: may return locks on this directory too? do we filter? or should we output?
 			output, _, err = c.zkConn.Children(c.fsPath + path)
-
-			fmt.Printf("output list: %v", output)
 
 			if err != nil {
 				return nil, err
