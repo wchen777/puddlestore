@@ -666,16 +666,18 @@ func (c *PuddleClient) getRandomTapestryNode() (string, error) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano())) // seed with current time
 
 	// get children of tapestry/node- to get tap nodes
-	nodes, _, err := c.zkConn.Children(c.tapestryPath + "/node-")
+	nodes, _, err := c.zkConn.Children(c.tapestryPath)
 
 	if err != nil {
 		return "", err
 	}
 
+	fmt.Println("tap nodes in get random tap node: ", nodes)
+
 	// select random node to connect to
 	selectedNode := nodes[r.Intn(len(nodes))]
 
-	fmt.Println("Selected node path: ", selectedNode)
+	fmt.Println("selected node path: ", selectedNode)
 
 	return selectedNode, nil // TODO: do we need to append tapestry path here?
 }
