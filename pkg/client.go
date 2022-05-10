@@ -355,6 +355,9 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 func (c *PuddleClient) Mkdir(path string) error {
 	// should just be a zookeeper create call?
 
+	// STEPS:
+	// check the parent dir exists, and is a valid directory (not a file)
+
 	// create local inode
 	newDirINode := &inode{
 		Filepath: path,
