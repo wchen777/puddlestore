@@ -77,7 +77,7 @@ func (d *DistLock) Acquire() (err error) {
 	// locks /dir/lock-
 	path, err := d.zkConn.Create(d.lockRoot+lockPrefix, []byte(""), zk.FlagSequence|zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 
-	fmt.Println("path: ", path)
+	fmt.Println("path: %s", path)
 
 	if err != nil {
 		return err
@@ -93,6 +93,7 @@ func (d *DistLock) Acquire() (err error) {
 		// children on \a with dir \a\b will give us:
 		// \a\lock-..., as well as \a\b elements...
 		unfiltChil, _, err := d.zkConn.Children(d.lockRoot)
+		fmt.Printf("children %s\n", unfiltChil)
 
 		// filter non lock children
 		var chil []string

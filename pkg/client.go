@@ -102,6 +102,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	distlock := CreateDistLock(LOCK_ROOT+c.fsPath+path, c.zkConn)
 
 	distlock.Acquire()
+	fmt.Printf("here\n")
 
 	var newFileinode *inode
 	data := make([]byte, 0)
