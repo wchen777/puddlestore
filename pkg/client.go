@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-zookeeper/zk"
 	uuid "github.com/google/uuid"
+	"github.com/tmthrgd/go-memset"
 )
 
 // Client is a puddlestore client interface that will communicate with puddlestore nodes
@@ -360,13 +361,31 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 
 	endPos := offset + uint64(len(data)) // the final position of the data to be written
 
-	if endPos >= openFile.INode.Size { // if the end of the write is at or beyond the end of the file
-		openFile.Data = append(openFile.Data[:offset], data...) // overwrite everything past the end
-		openFile.INode.Size = endPos                            // update the size of the file
-	} else { // otherwise we have a chunk of file leftover that we need to append, no need to update size
-		half := append(data, openFile.Data[endPos:]...)         // second half of the newly modified file
-		openFile.Data = append(openFile.Data[:offset], half...) // is there a more efficient way to do this?
+	// if the end position is beyond the size of the file, set the size
+	if endPos > openFile.INode.Size {
+		openFile.INode.Size = endPos
 	}
+
+	// create a new buffer to hold the new data equal to the size of the file
+	newData := make([]byte, openFile.INode.Size)
+
+	memset.Memset(newData, 0) // zero out the new data
+
+	// copy the old data into the new buffer
+	copy(newData, openFile.Data)
+
+	// overwrite offset -> offset + len(data) with the new data
+	copy(newData[offset:], data)
+
+	openFile.Data = newData
+
+	// if endPos >= openFile.INode.Size { // if the end of the write is at or beyond the end of the file
+	// 	openFile.Data = append(openFile.Data[:offset], data...) // overwrite everything past the end
+	// 	openFile.INode.Size = endPos                            // update the size of the file
+	// } else { // otherwise we have a chunk of file leftover that we need to append, no need to update size
+	// 	half := append(data, openFile.Data[endPos:]...)         // second half of the newly modified file
+	// 	openFile.Data = append(openFile.Data[:offset], half...) // is there a more efficient way to do this?
+	// }
 
 	return nil
 }

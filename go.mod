@@ -12,6 +12,7 @@ require github.com/google/uuid v1.3.0
 
 require (
 	github.com/golang/protobuf v1.5.0 // indirect
+	github.com/tmthrgd/go-memset v0.0.0-20190904060434-6fb7a21f88f1 // indirect
 	golang.org/x/net v0.0.0-20201224014010-6772e930b67b // indirect
 	golang.org/x/sys v0.0.0-20201119102817-f84b799fce68 // indirect
 	golang.org/x/text v0.3.3 // indirect
