@@ -86,6 +86,9 @@ type PuddleClient struct {
 // open a file and return a file descriptor, DOES THIS PATH START WITH A /?
 func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
+	// clean path to remove trailing dir.
+	path = strings.TrimSuffix(path, "/")
+
 	fmt.Println("open: ", path)
 
 	// search for the file path metadata in zookeeper
@@ -426,6 +429,9 @@ func (c *PuddleClient) Mkdir(path string) error {
 	// check the parent dir exists, and is a valid directory (not a file)
 	// check if the path already exists
 
+	// clean path to remove trailing dir.
+	path = strings.TrimSuffix(path, "/")
+
 	parentNodeIsDir := c.isParentINodeDir(path)
 
 	if !parentNodeIsDir {
@@ -461,6 +467,9 @@ func (c *PuddleClient) Mkdir(path string) error {
 
 // remove a directory or file
 func (c *PuddleClient) Remove(path string) error {
+
+	// clean path to remove trailing dir.
+	path = strings.TrimSuffix(path, "/")
 
 	// search for path in zookeeper
 	exists, _, err := c.zkConn.Exists(c.fsPath + path)
@@ -533,6 +542,9 @@ func (c *PuddleClient) Remove(path string) error {
 
 // list file & directory names (not full names) under `path`
 func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths error here! i think
+
+	// clean path to remove trailing dir.
+	path = strings.TrimSuffix(path, "/")
 
 	// search for path in zookeeper
 	exists, _, err := c.zkConn.Exists(c.fsPath + path)
