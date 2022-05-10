@@ -680,7 +680,7 @@ func (c *PuddleClient) getRandomTapestryNode() (string, error) {
 
 	fmt.Println("selected node path: ", selectedNode)
 
-	return selectedNode, nil // TODO: do we need to append tapestry path here?
+	return c.tapestryPath + "/" + selectedNode, nil // TODO: do we need to append tapestry path here? yes
 }
 
 func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapestry.Client, error) {
