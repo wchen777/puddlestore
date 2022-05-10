@@ -112,12 +112,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		} else { // otherwise create the file
 
 			// first check  parent
-			parentNodeIsDir, err := c.isParentINodeDir(path)
-
-			if err != nil {
-				distlock.Release()
-				return -1, err
-			}
+			parentNodeIsDir := c.isParentINodeDir(path)
 
 			if !parentNodeIsDir {
 				distlock.Release()
@@ -416,11 +411,7 @@ func (c *PuddleClient) Mkdir(path string) error {
 	// STEPS:
 	// check the parent dir exists, and is a valid directory (not a file)
 
-	parentNodeIsDir, err := c.isParentINodeDir(path)
-
-	if err != nil {
-		return err
-	}
+	parentNodeIsDir := c.isParentINodeDir(path)
 
 	if !parentNodeIsDir {
 		return errors.New("mkdir: parent is not a directory")
@@ -758,14 +749,14 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 
 }
 
-func (c *PuddleClient) isParentINodeDir(path string) (bool, error) {
+func (c *PuddleClient) isParentINodeDir(path string) bool {
 
 	lastInd := strings.LastIndex(path, "/")
 
-	fmt.Println("parent node dir last ind: ", lastInd)
+	// fmt.Println("parent node dir last ind: ", lastInd)
 
-	if lastInd == 0 { // root dir
-		return true, nil
+	if lastInd <= 0 { // root dir
+		return true
 	}
 
 	// get the string until the last / from path, otherwise
@@ -775,12 +766,12 @@ func (c *PuddleClient) isParentINodeDir(path string) (bool, error) {
 	data, _, err := c.zkConn.Get(c.fsPath + parentPath)
 
 	if err != nil {
-		return false, err
+		return false
 	}
 
 	// unmarshal the inode
 	newFileinode, _ := decodeInode(data)
 
-	return newFileinode.IsDir, nil
+	return newFileinode.IsDir
 
 }
