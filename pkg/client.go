@@ -364,6 +364,8 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 // write a file and write `data` starting at `offset`
 func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 
+	fmt.Println("write (offset, data len): ", offset, len(data))
+
 	// remember to modify the inode data stored locally on each write, flush to zookeeper on close
 
 	// get the open file
