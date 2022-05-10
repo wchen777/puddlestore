@@ -203,7 +203,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			writePtr += copy(data[writePtr:], blockData) // i'm getting a linter warning here??
 		}
 
-		fmt.Println("data after open: ", data)
+		// fmt.Println("data after open: ", data)
 
 	}
 
@@ -222,7 +222,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		FileLock: distlock,
 	}
 
-	fmt.Println("open: open file data: ", c.openFiles[fd].Data)
+	// fmt.Println("open: open file data: ", c.openFiles[fd].Data)
 
 	// if we have specified write, add fd to dirty files (to be flushed on close)
 	if write {
@@ -361,7 +361,7 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 	openFile := c.openFiles[fd]
 
 	// print out all of open file
-	fmt.Printf("read, open file data: %v", openFile)
+	// fmt.Printf("read, open file data: %v", openFile)
 
 	if openFile == nil {
 		return nil, errors.New("read: file not open")
@@ -371,8 +371,8 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 		return []byte{}, nil
 	}
 
-	fmt.Printf("read data: %v\n", openFile.Data)
-	fmt.Println("read data len: " + fmt.Sprintf("%v", len(openFile.Data)))
+	// fmt.Printf("read data: %v\n", openFile.Data)
+	// fmt.Println("read data len: " + fmt.Sprintf("%v", len(openFile.Data)))
 
 	// get minimum of position to read to and size of file
 	endPos := size + offset
@@ -383,7 +383,7 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 	// get the data from the file
 	data := openFile.Data[offset:endPos]
 
-	fmt.Printf("READ RETURNED data: %v\n", data)
+	// fmt.Printf("READ RETURNED data: %v\n", data)
 
 	return data, nil
 }
