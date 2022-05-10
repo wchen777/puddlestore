@@ -190,6 +190,10 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		data = make([]byte, newFileinode.Size) // create buffer to store file data
 		writePtr := 0                          // write pointer
 
+		// todo:
+		// check uuid make sure these are good
+		// only one uuid.
+
 		// get the file data from tapestry, loop through block uuids and get the data from tapestry
 		for _, blockUUID := range newFileinode.Blocks {
 			blockData, err := client.Get(blockUUID.String())
@@ -288,7 +292,11 @@ func (c *PuddleClient) Close(fd int) error {
 		// keeps track of new uuids
 		var newUIDs []uuid.UUID
 
+		// double check this.
+		fmt.Printf("file length %d\n", openFile.Data)
 		for i := 0; i < len(openFile.Data); i += BLOCK_SIZE {
+
+			fmt.Printf("here\n")
 
 			end += BLOCK_SIZE
 
@@ -568,18 +576,11 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 	fmt.Printf("List One here %s\n", (c.fsPath + path))
 
 	var output []string
-
-	fmt.Printf("%v\n", exists)
-
 	if exists {
 
 		// get the inode from zookeeper
 
-		fmt.Printf("before get inode")
-
 		inode, err := c.getINode(path)
-
-		fmt.Printf("%v %v after get inode\n", inode, err)
 
 		if err != nil {
 			return nil, err
