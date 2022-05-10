@@ -569,16 +569,21 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 
 	var output []string
 
+	fmt.Printf("%v\n", exists)
+
 	if exists {
 
 		// get the inode from zookeeper
+
+		fmt.Printf("before get inode")
+
 		inode, err := c.getINode(path)
+
+		fmt.Printf("%v %v after get inode\n", inode, err)
 
 		if err != nil {
 			return nil, err
 		}
-
-		fmt.Printf("inode: %v\n", inode)
 
 		// if directory, print out subdirectories
 		// otherwise, print out file.
