@@ -578,6 +578,8 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 			// CONCERN: may return locks on this directory too? do we filter? or should we output?
 			output, _, err = c.zkConn.Children(c.fsPath + path)
 
+			fmt.Printf("output list: %v", output)
+
 			if err != nil {
 				return nil, err
 			}
