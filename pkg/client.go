@@ -412,11 +412,18 @@ func (c *PuddleClient) Mkdir(path string) error {
 
 	// STEPS:
 	// check the parent dir exists, and is a valid directory (not a file)
+	// check if the path already exists
 
 	parentNodeIsDir := c.isParentINodeDir(path)
 
 	if !parentNodeIsDir {
 		return errors.New("mkdir: parent is not a directory")
+	}
+
+	// check if the path already exists
+	exists, _, _ := c.zkConn.Exists(c.fsPath + path)
+	if exists {
+		return errors.New("mkdir: path already exists")
 	}
 
 	// create local inode
