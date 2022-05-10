@@ -77,7 +77,7 @@ func CreateCluster(config Config) (*Cluster, error) {
 	}
 
 	// create tapestry root path
-	conn.Create(TAP_ADDRESS_ROOT, []byte{}, 0, zk.WorldACL(zk.PermAll))
+	//conn.Create(TAP_ADDRESS_ROOT, []byte{}, 0, zk.WorldACL(zk.PermAll))
 
 	// init paths directories: /puddlestore, /locks, /tapestry
 	initPaths(conn)
@@ -135,6 +135,34 @@ func (c *Cluster) Shutdown() {
 	for _, node := range c.nodes {
 		node.GracefulExit()
 	}
+
+	// try and establish a new connection
+	conn, err := ConnectZk(c.config.ZkAddr)
+
+	if err != nil {
+		return
+	}
+
+	// delete puddlestore
+	children, _, _ := conn.Children(FS_ROOT)
+	for _, c := range children {
+		conn.Delete(FS_ROOT+"/"+c, -1)
+	}
+	conn.Delete(FS_ROOT, -1)
+
+	// delete tap
+	children, _, _ = conn.Children(TAP_ADDRESS_ROOT)
+	for _, c := range children {
+		conn.Delete(TAP_ADDRESS_ROOT+"/"+c, -1)
+	}
+	conn.Delete(TAP_ADDRESS_ROOT, -1)
+
+	// delete locks
+	children, _, _ = conn.Children(LOCK_ROOT)
+	for _, c := range children {
+		conn.Delete(LOCK_ROOT+"/"+c, -1)
+	}
+	conn.Delete(LOCK_ROOT, -1)
 
 	time.Sleep(time.Second)
 }
