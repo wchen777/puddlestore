@@ -371,7 +371,7 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 		return []byte{}, nil
 	}
 
-	fmt.Println("read data:" + string(openFile.Data))
+	fmt.Printf("read data: %v\n", openFile.Data)
 	fmt.Println("read data len: " + fmt.Sprintf("%v", len(openFile.Data)))
 
 	// get minimum of position to read to and size of file
@@ -383,7 +383,7 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 	// get the data from the file
 	data := openFile.Data[offset:endPos]
 
-	fmt.Println("READ RETURNED data:" + string(data))
+	fmt.Printf("READ RETURNED data: %v\n", data)
 
 	return data, nil
 }
