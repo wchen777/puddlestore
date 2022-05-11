@@ -192,6 +192,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		// Connect to a tap node
 		client, err := c.getTapNodeConnected()
 		fmt.Printf("client in open: %v", client)
+		fmt.Printf("released %s\n", err)
 
 		if err != nil {
 			distlock.Release()
@@ -200,10 +201,6 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 		data = make([]byte, newFileinode.Size) // create buffer to store file data
 		writePtr := 0                          // write pointer
-
-		// todo:
-		// check uuid make sure these are good
-		// only one uuid.
 
 		// get the file data from tapestry, loop through block uuids and get the data from tapestry
 		for _, blockUUID := range newFileinode.Blocks {
