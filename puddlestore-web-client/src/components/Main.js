@@ -7,7 +7,9 @@ import {
   Code,
   Grid,
   HStack,
+  Heading,
   Select,
+  Badge,
   Button,
   AlertDialog,
   AlertDialogBody,
@@ -16,6 +18,7 @@ import {
   AlertDialogContent,
   AlertDialogOverlay,
   useDisclosure,
+  Divider,
 } from '@chakra-ui/react';
 
 import {
@@ -36,6 +39,9 @@ import {
 
 import { PuddleStoreClient } from '../puddlestore/puddlestore_grpc_web_pb.js';
 import './Main.css';
+import ControlPanel from './ControlPanel.js';
+import CommandHistory from './CommandHistory.js';
+import OpenData from './OpenData.js';
 
 const client = new PuddleStoreClient('http://localhost:3334'); // connects to the envoy proxy
 
@@ -46,6 +52,8 @@ export default function Main() {
   const [commandHistory, setCommandHistory] = useState([]); // command history
 
   const [error, setError] = useState(null);
+
+  // ------------------------ HANDLERS FOR CLIENT REQUESTS ------------------------ //
 
   const connectToPuddleStore = () => {
     client.clientConnect(new Empty(), {}, (err, id) => {
@@ -138,8 +146,15 @@ export default function Main() {
   };
 
   const writeRequestPuddleStore = ({ fd, data, offset }) => {
+    let utf8Encode = new TextEncoder(); // convert data string to byte array for write
+
     client.clientWrite(
-      new WriteMessage([clientData.clientID, fd, data, offset]),
+      new WriteMessage([
+        clientData.clientID,
+        fd,
+        utf8Encode.encode(data),
+        offset,
+      ]),
       {},
       (err, _) => {
         if (err) {
@@ -238,6 +253,8 @@ export default function Main() {
     );
   };
 
+  // ------------------------------------------------------------------------ //
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef();
 
@@ -254,33 +271,50 @@ export default function Main() {
       )}
 
       {connected && (
-        <HStack spacing={5}>
-          <Button
-            colorScheme="purple"
-            onClick={() => disconnectFromPuddleStore()}
-            size="lg"
-          >
-            Exit PuddleStore
-          </Button>
-          <Text fontSize="xl">
-            (REMEMBER TO CLICK THIS BUTTON! <br />
-            Puddlestore server does not remove clients automatically yet.)
-          </Text>
-        </HStack>
+        <VStack spacing={6} py={20}>
+          <VStack mt={8}>
+            <Heading as="h2" size="xl">
+              {' '}
+              Welcome to PuddleStore!{' '}
+            </Heading>
+            <Heading as="h4" size="md">
+              {' '}
+              Your ID is {clientData.clientID}{' '}
+            </Heading>
+          </VStack>
+
+          <Divider orientation="horizontal" />
+          <HStack spacing={5}>
+            <CommandHistory commandHistory={commandHistory} />
+            <OpenData openFDs={openFDs} />
+          </HStack>
+
+          <Divider orientation="horizontal" />
+          <ControlPanel
+            open={openRequestPuddleStore}
+            close={closeRequestPuddleStore}
+            read={readRequestPuddleStore}
+            write={writeRequestPuddleStore}
+            mkdir={mkdirRequestPuddleStore}
+            remove={removeRequestPuddleStore}
+            list={listRequestPuddleStore}
+          />
+          <Divider orientation="horizontal" />
+          <HStack spacing={5}>
+            <Button
+              colorScheme="purple"
+              onClick={() => disconnectFromPuddleStore()}
+              size="lg"
+            >
+              Exit PuddleStore
+            </Button>
+            <Badge colorScheme={'red'}>
+              {'<-'} REMEMBER TO CLICK THIS BUTTON BEFORE EXITING! <br />
+              Puddlestore server does not remove clients automatically yet.
+            </Badge>
+          </HStack>
+        </VStack>
       )}
-
-      {/* <HStack spacing={4}>
-
-            <Select placeholder='Command'>
-                <option value='Open'>Open</option>
-                <option value='Close'>Close</option>
-                <option value='Read'>Read</option>
-                <option value='Write'>Write</option>
-                <option value='Mkdir'>Mkdir</option>
-                <option value='Remove'>Remove</option>
-                <option value='List'>List</option>
-            </Select>
-        </HStack> */}
 
       <AlertDialog
         isOpen={isOpen}

@@ -10,14 +10,14 @@ import (
 type PuddleStoreServerInstance struct {
 	UnimplementedPuddleStoreServer // for forwards compatability
 
-	Mutex   sync.Mutex         // server mutex
-	Addr    net.Addr           // addr of server
-	Cluster *Cluster           // the puddlestore cluster
-	Clients map[string]*Client // map of client ID to Client
+	Mutex   sync.Mutex        // server mutex
+	Addr    net.Addr          // addr of server
+	Cluster *Cluster          // the puddlestore cluster
+	Clients map[string]Client // map of client ID to Client
 }
 
 func (s *PuddleStoreServerInstance) InitStruct() {
-	s.Clients = make(map[string]*Client)
+	s.Clients = make(map[string]Client)
 }
 
 func (s *PuddleStoreServerInstance) InitCluster() error {
@@ -54,7 +54,7 @@ func (s *PuddleStoreServerInstance) ClientConnect(ctx context.Context, e *Empty)
 		return nil, err
 	}
 
-	s.Clients[client.GetID()] = &client
+	s.Clients[client.GetID()] = client
 
 	fmt.Println("Client connected: ", client.GetID())
 
@@ -71,7 +71,13 @@ func (s *PuddleStoreServerInstance) ClientExit(ctx context.Context, ID *ClientID
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := *s.Clients[ID.Id]
+	client := s.Clients[ID.Id]
+
+	if client == nil {
+		return &Success{
+			Ok: false,
+		}, fmt.Errorf("client not found")
+	}
 
 	fmt.Println("Client exited: ", client.GetID())
 
@@ -92,7 +98,21 @@ func (s *PuddleStoreServerInstance) ClientOpen(ctx context.Context, om *OpenMess
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := *s.Clients[om.ClientId.Id]
+	fmt.Println("OPEN!")
+	fmt.Println(s.Clients)
+
+	client := s.Clients[om.ClientId.Id]
+
+	fmt.Println("Client opened: ", client)
+
+	if client == nil {
+		return &OpenResponse{
+			Success: &Success{
+				Ok: false, // if err is nil, then success is true
+			},
+			Fd: -1, // return the fd
+		}, fmt.Errorf("client not found")
+	}
 
 	fd, err := client.Open(om.Filepath, om.Create, om.Write)
 
@@ -112,7 +132,13 @@ func (s *PuddleStoreServerInstance) ClientClose(ctx context.Context, cm *CloseMe
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := *s.Clients[cm.ClientId.Id]
+	client := s.Clients[cm.ClientId.Id]
+
+	if client == nil {
+		return &Success{
+			Ok: false,
+		}, fmt.Errorf("client not found")
+	}
 
 	err := client.Close(int(cm.Fd))
 
@@ -128,7 +154,16 @@ func (s *PuddleStoreServerInstance) ClientRead(ctx context.Context, rm *ReadMess
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := *s.Clients[rm.ClientId.Id]
+	client := s.Clients[rm.ClientId.Id]
+
+	if client == nil {
+		return &ReadResponse{
+			Success: &Success{
+				Ok: false, // if err is nil, then success is true
+			},
+			Data: nil, // return the fd
+		}, fmt.Errorf("client not found")
+	}
 
 	buf, err := client.Read(int(rm.Fd), uint64(rm.Offset), uint64(rm.Size))
 
@@ -147,7 +182,13 @@ func (s *PuddleStoreServerInstance) ClientWrite(ctx context.Context, wm *WriteMe
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := *s.Clients[wm.ClientId.Id]
+	client := s.Clients[wm.ClientId.Id]
+
+	if client == nil {
+		return &Success{
+			Ok: false,
+		}, fmt.Errorf("client not found")
+	}
 
 	err := client.Write(int(wm.Fd), uint64(wm.Offset), wm.Data)
 
@@ -163,7 +204,13 @@ func (s *PuddleStoreServerInstance) ClientMkdir(ctx context.Context, mdm *MkdirM
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := *s.Clients[mdm.ClientId.Id]
+	client := s.Clients[mdm.ClientId.Id]
+
+	if client == nil {
+		return &Success{
+			Ok: false,
+		}, fmt.Errorf("client not found")
+	}
 
 	err := client.Mkdir(mdm.Path)
 
@@ -176,7 +223,13 @@ func (s *PuddleStoreServerInstance) ClientRemove(ctx context.Context, rmd *Remov
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := *s.Clients[rmd.ClientId.Id]
+	client := s.Clients[rmd.ClientId.Id]
+
+	if client == nil {
+		return &Success{
+			Ok: false,
+		}, fmt.Errorf("client not found")
+	}
 
 	err := client.Remove(rmd.Path)
 
@@ -189,7 +242,16 @@ func (s *PuddleStoreServerInstance) ClientList(ctx context.Context, lmd *ListMes
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := *s.Clients[lmd.ClientId.Id]
+	client := s.Clients[lmd.ClientId.Id]
+
+	if client == nil {
+		return &ListResponse{
+			Success: &Success{
+				Ok: false, // if err is nil, then success is true
+			},
+			Result: nil, // return the fd
+		}, fmt.Errorf("client not found")
+	}
 
 	files, err := client.List(lmd.Path)
 

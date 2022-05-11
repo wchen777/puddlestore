@@ -5,3 +5,19 @@
     align-items: center;
 
 }
+
+
+.border {
+    /*
+    create a thin gray border with a round radius
+    */
+    border: 1px solid rgb(204, 204, 204);
+    border-radius: 5px;
+}
+
+.left-justify {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
