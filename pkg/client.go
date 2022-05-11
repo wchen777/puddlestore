@@ -764,6 +764,14 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 	}
 
 	if tapNode.TapCli != nil {
+		// check if node is online, if not return errr
+		_, err = tapNode.TapCli.Lookup("check")
+
+		// if test lookup fails, return error.
+		if err != nil {
+			return nil, err
+		}
+
 		return tapNode.TapCli, nil
 	} else {
 		client, err := tapestry.Connect(tapNode.Addr)

@@ -124,27 +124,6 @@ func TestBlock(t *testing.T) {
 		t.Fatal("should have err ")
 	}
 
-	// client2, err := cluster.NewClient()
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-
-	// err := go func() {
-	// 	client2.Open("/test10", true, false)
-	// 	var out []byte
-	// 	out, err = client2.Read(0, 0, 5)
-
-	// 	if err != nil {
-	// 		t.Fatal("should not err")
-	// 	}
-
-	// 	if "one" != string(out) {
-	// 		t.Fatalf("Expected: %v, Got: %v", "one", string(out))
-	// 	}
-
-	// 	return nil
-	// }()
-
 	// should not be nil
 	if err != nil {
 		t.Fatal("should not err")
