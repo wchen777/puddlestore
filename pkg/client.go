@@ -89,6 +89,11 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	// clean path to remove trailing dir.
 	path = strings.TrimSuffix(path, "/")
 
+	// error check empty path
+	if path == "" {
+		return -1, errors.New("empty path inputted")
+	}
+
 	// search for lock
 	lockExists, _, err := c.zkConn.Exists(LOCK_ROOT + path)
 
