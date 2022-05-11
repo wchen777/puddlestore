@@ -98,12 +98,9 @@ func (s *PuddleStoreServerInstance) ClientOpen(ctx context.Context, om *OpenMess
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	fmt.Println("OPEN!")
 	fmt.Println(s.Clients)
 
-	client := s.Clients[om.ClientId.Id]
-
-	fmt.Println("Client opened: ", client)
+	client := s.Clients[om.ClientId]
 
 	if client == nil {
 		return &OpenResponse{
@@ -115,6 +112,8 @@ func (s *PuddleStoreServerInstance) ClientOpen(ctx context.Context, om *OpenMess
 	}
 
 	fd, err := client.Open(om.Filepath, om.Create, om.Write)
+
+	fmt.Println("Client ", client.GetID(), " opened file: ", om.Filepath)
 
 	return &OpenResponse{
 		Success: &Success{
@@ -132,7 +131,7 @@ func (s *PuddleStoreServerInstance) ClientClose(ctx context.Context, cm *CloseMe
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := s.Clients[cm.ClientId.Id]
+	client := s.Clients[cm.ClientId]
 
 	if client == nil {
 		return &Success{
@@ -154,7 +153,7 @@ func (s *PuddleStoreServerInstance) ClientRead(ctx context.Context, rm *ReadMess
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := s.Clients[rm.ClientId.Id]
+	client := s.Clients[rm.ClientId]
 
 	if client == nil {
 		return &ReadResponse{
@@ -182,7 +181,7 @@ func (s *PuddleStoreServerInstance) ClientWrite(ctx context.Context, wm *WriteMe
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := s.Clients[wm.ClientId.Id]
+	client := s.Clients[wm.ClientId]
 
 	if client == nil {
 		return &Success{
@@ -204,7 +203,7 @@ func (s *PuddleStoreServerInstance) ClientMkdir(ctx context.Context, mdm *MkdirM
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := s.Clients[mdm.ClientId.Id]
+	client := s.Clients[mdm.ClientId]
 
 	if client == nil {
 		return &Success{
@@ -223,7 +222,7 @@ func (s *PuddleStoreServerInstance) ClientRemove(ctx context.Context, rmd *Remov
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := s.Clients[rmd.ClientId.Id]
+	client := s.Clients[rmd.ClientId]
 
 	if client == nil {
 		return &Success{
@@ -242,7 +241,7 @@ func (s *PuddleStoreServerInstance) ClientList(ctx context.Context, lmd *ListMes
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	client := s.Clients[lmd.ClientId.Id]
+	client := s.Clients[lmd.ClientId]
 
 	if client == nil {
 		return &ListResponse{

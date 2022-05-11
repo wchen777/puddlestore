@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, UnorderedList, ListItem, Box } from '@chakra-ui/react';
+import { Text, UnorderedList, ListItem, Box, Badge } from '@chakra-ui/react';
 import './Main.css';
 
 export default function OpenData({ openFDs }) {
@@ -19,11 +19,12 @@ export default function OpenData({ openFDs }) {
         {openFDs.length === 0 ? (
           <Text p={2}>No open file data</Text>
         ) : (
-          <UnorderedList>
+          <UnorderedList p={2}>
             {openFDs.map(fd => {
               return (
                 <ListItem>
-                  {fd.fd}: {fd.filepath}
+                  {fd.fd}: {fd.filepath}{' '}
+                  {fd.write && <Badge colorScheme={'blue'}>write</Badge>}
                 </ListItem>
               );
             })}

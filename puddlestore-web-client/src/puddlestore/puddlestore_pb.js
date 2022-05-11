@@ -599,7 +599,7 @@ proto.pkg.OpenMessage.prototype.toObject = function(opt_includeInstance) {
  */
 proto.pkg.OpenMessage.toObject = function(includeInstance, msg) {
   var f, obj = {
-    clientId: (f = msg.getClientId()) && proto.pkg.ClientID.toObject(includeInstance, f),
+    clientId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     filepath: jspb.Message.getFieldWithDefault(msg, 2, ""),
     create: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
     write: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
@@ -640,8 +640,7 @@ proto.pkg.OpenMessage.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new proto.pkg.ClientID;
-      reader.readMessage(value,proto.pkg.ClientID.deserializeBinaryFromReader);
+      var value = /** @type {string} */ (reader.readString());
       msg.setClientId(value);
       break;
     case 2:
@@ -686,11 +685,10 @@ proto.pkg.OpenMessage.prototype.serializeBinary = function() {
 proto.pkg.OpenMessage.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
   f = message.getClientId();
-  if (f != null) {
-    writer.writeMessage(
+  if (f.length > 0) {
+    writer.writeString(
       1,
-      f,
-      proto.pkg.ClientID.serializeBinaryToWriter
+      f
     );
   }
   f = message.getFilepath();
@@ -718,39 +716,20 @@ proto.pkg.OpenMessage.serializeBinaryToWriter = function(message, writer) {
 
 
 /**
- * optional ClientID client_id = 1;
- * @return {?proto.pkg.ClientID}
+ * optional string client_id = 1;
+ * @return {string}
  */
 proto.pkg.OpenMessage.prototype.getClientId = function() {
-  return /** @type{?proto.pkg.ClientID} */ (
-    jspb.Message.getWrapperField(this, proto.pkg.ClientID, 1));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
 /**
- * @param {?proto.pkg.ClientID|undefined} value
+ * @param {string} value
  * @return {!proto.pkg.OpenMessage} returns this
-*/
+ */
 proto.pkg.OpenMessage.prototype.setClientId = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.pkg.OpenMessage} returns this
- */
-proto.pkg.OpenMessage.prototype.clearClientId = function() {
-  return this.setClientId(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.pkg.OpenMessage.prototype.hasClientId = function() {
-  return jspb.Message.getField(this, 1) != null;
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -840,7 +819,7 @@ proto.pkg.CloseMessage.prototype.toObject = function(opt_includeInstance) {
  */
 proto.pkg.CloseMessage.toObject = function(includeInstance, msg) {
   var f, obj = {
-    clientId: (f = msg.getClientId()) && proto.pkg.ClientID.toObject(includeInstance, f),
+    clientId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     fd: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
@@ -879,8 +858,7 @@ proto.pkg.CloseMessage.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new proto.pkg.ClientID;
-      reader.readMessage(value,proto.pkg.ClientID.deserializeBinaryFromReader);
+      var value = /** @type {string} */ (reader.readString());
       msg.setClientId(value);
       break;
     case 2:
@@ -917,11 +895,10 @@ proto.pkg.CloseMessage.prototype.serializeBinary = function() {
 proto.pkg.CloseMessage.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
   f = message.getClientId();
-  if (f != null) {
-    writer.writeMessage(
+  if (f.length > 0) {
+    writer.writeString(
       1,
-      f,
-      proto.pkg.ClientID.serializeBinaryToWriter
+      f
     );
   }
   f = message.getFd();
@@ -935,39 +912,20 @@ proto.pkg.CloseMessage.serializeBinaryToWriter = function(message, writer) {
 
 
 /**
- * optional ClientID client_id = 1;
- * @return {?proto.pkg.ClientID}
+ * optional string client_id = 1;
+ * @return {string}
  */
 proto.pkg.CloseMessage.prototype.getClientId = function() {
-  return /** @type{?proto.pkg.ClientID} */ (
-    jspb.Message.getWrapperField(this, proto.pkg.ClientID, 1));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
 /**
- * @param {?proto.pkg.ClientID|undefined} value
+ * @param {string} value
  * @return {!proto.pkg.CloseMessage} returns this
-*/
+ */
 proto.pkg.CloseMessage.prototype.setClientId = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.pkg.CloseMessage} returns this
- */
-proto.pkg.CloseMessage.prototype.clearClientId = function() {
-  return this.setClientId(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.pkg.CloseMessage.prototype.hasClientId = function() {
-  return jspb.Message.getField(this, 1) != null;
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -1021,7 +979,7 @@ proto.pkg.ReadMessage.prototype.toObject = function(opt_includeInstance) {
  */
 proto.pkg.ReadMessage.toObject = function(includeInstance, msg) {
   var f, obj = {
-    clientId: (f = msg.getClientId()) && proto.pkg.ClientID.toObject(includeInstance, f),
+    clientId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     fd: jspb.Message.getFieldWithDefault(msg, 2, 0),
     offset: jspb.Message.getFieldWithDefault(msg, 3, 0),
     size: jspb.Message.getFieldWithDefault(msg, 4, 0)
@@ -1062,8 +1020,7 @@ proto.pkg.ReadMessage.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new proto.pkg.ClientID;
-      reader.readMessage(value,proto.pkg.ClientID.deserializeBinaryFromReader);
+      var value = /** @type {string} */ (reader.readString());
       msg.setClientId(value);
       break;
     case 2:
@@ -1108,11 +1065,10 @@ proto.pkg.ReadMessage.prototype.serializeBinary = function() {
 proto.pkg.ReadMessage.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
   f = message.getClientId();
-  if (f != null) {
-    writer.writeMessage(
+  if (f.length > 0) {
+    writer.writeString(
       1,
-      f,
-      proto.pkg.ClientID.serializeBinaryToWriter
+      f
     );
   }
   f = message.getFd();
@@ -1140,39 +1096,20 @@ proto.pkg.ReadMessage.serializeBinaryToWriter = function(message, writer) {
 
 
 /**
- * optional ClientID client_id = 1;
- * @return {?proto.pkg.ClientID}
+ * optional string client_id = 1;
+ * @return {string}
  */
 proto.pkg.ReadMessage.prototype.getClientId = function() {
-  return /** @type{?proto.pkg.ClientID} */ (
-    jspb.Message.getWrapperField(this, proto.pkg.ClientID, 1));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
 /**
- * @param {?proto.pkg.ClientID|undefined} value
+ * @param {string} value
  * @return {!proto.pkg.ReadMessage} returns this
-*/
+ */
 proto.pkg.ReadMessage.prototype.setClientId = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.pkg.ReadMessage} returns this
- */
-proto.pkg.ReadMessage.prototype.clearClientId = function() {
-  return this.setClientId(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.pkg.ReadMessage.prototype.hasClientId = function() {
-  return jspb.Message.getField(this, 1) != null;
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -1262,7 +1199,7 @@ proto.pkg.WriteMessage.prototype.toObject = function(opt_includeInstance) {
  */
 proto.pkg.WriteMessage.toObject = function(includeInstance, msg) {
   var f, obj = {
-    clientId: (f = msg.getClientId()) && proto.pkg.ClientID.toObject(includeInstance, f),
+    clientId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     fd: jspb.Message.getFieldWithDefault(msg, 2, 0),
     data: msg.getData_asB64(),
     offset: jspb.Message.getFieldWithDefault(msg, 4, 0)
@@ -1303,8 +1240,7 @@ proto.pkg.WriteMessage.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new proto.pkg.ClientID;
-      reader.readMessage(value,proto.pkg.ClientID.deserializeBinaryFromReader);
+      var value = /** @type {string} */ (reader.readString());
       msg.setClientId(value);
       break;
     case 2:
@@ -1349,11 +1285,10 @@ proto.pkg.WriteMessage.prototype.serializeBinary = function() {
 proto.pkg.WriteMessage.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
   f = message.getClientId();
-  if (f != null) {
-    writer.writeMessage(
+  if (f.length > 0) {
+    writer.writeString(
       1,
-      f,
-      proto.pkg.ClientID.serializeBinaryToWriter
+      f
     );
   }
   f = message.getFd();
@@ -1381,39 +1316,20 @@ proto.pkg.WriteMessage.serializeBinaryToWriter = function(message, writer) {
 
 
 /**
- * optional ClientID client_id = 1;
- * @return {?proto.pkg.ClientID}
+ * optional string client_id = 1;
+ * @return {string}
  */
 proto.pkg.WriteMessage.prototype.getClientId = function() {
-  return /** @type{?proto.pkg.ClientID} */ (
-    jspb.Message.getWrapperField(this, proto.pkg.ClientID, 1));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
 /**
- * @param {?proto.pkg.ClientID|undefined} value
+ * @param {string} value
  * @return {!proto.pkg.WriteMessage} returns this
-*/
+ */
 proto.pkg.WriteMessage.prototype.setClientId = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.pkg.WriteMessage} returns this
- */
-proto.pkg.WriteMessage.prototype.clearClientId = function() {
-  return this.setClientId(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.pkg.WriteMessage.prototype.hasClientId = function() {
-  return jspb.Message.getField(this, 1) != null;
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -1527,7 +1443,7 @@ proto.pkg.MkdirMessage.prototype.toObject = function(opt_includeInstance) {
  */
 proto.pkg.MkdirMessage.toObject = function(includeInstance, msg) {
   var f, obj = {
-    clientId: (f = msg.getClientId()) && proto.pkg.ClientID.toObject(includeInstance, f),
+    clientId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     path: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
@@ -1566,8 +1482,7 @@ proto.pkg.MkdirMessage.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new proto.pkg.ClientID;
-      reader.readMessage(value,proto.pkg.ClientID.deserializeBinaryFromReader);
+      var value = /** @type {string} */ (reader.readString());
       msg.setClientId(value);
       break;
     case 2:
@@ -1604,11 +1519,10 @@ proto.pkg.MkdirMessage.prototype.serializeBinary = function() {
 proto.pkg.MkdirMessage.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
   f = message.getClientId();
-  if (f != null) {
-    writer.writeMessage(
+  if (f.length > 0) {
+    writer.writeString(
       1,
-      f,
-      proto.pkg.ClientID.serializeBinaryToWriter
+      f
     );
   }
   f = message.getPath();
@@ -1622,39 +1536,20 @@ proto.pkg.MkdirMessage.serializeBinaryToWriter = function(message, writer) {
 
 
 /**
- * optional ClientID client_id = 1;
- * @return {?proto.pkg.ClientID}
+ * optional string client_id = 1;
+ * @return {string}
  */
 proto.pkg.MkdirMessage.prototype.getClientId = function() {
-  return /** @type{?proto.pkg.ClientID} */ (
-    jspb.Message.getWrapperField(this, proto.pkg.ClientID, 1));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
 /**
- * @param {?proto.pkg.ClientID|undefined} value
+ * @param {string} value
  * @return {!proto.pkg.MkdirMessage} returns this
-*/
+ */
 proto.pkg.MkdirMessage.prototype.setClientId = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.pkg.MkdirMessage} returns this
- */
-proto.pkg.MkdirMessage.prototype.clearClientId = function() {
-  return this.setClientId(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.pkg.MkdirMessage.prototype.hasClientId = function() {
-  return jspb.Message.getField(this, 1) != null;
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -1708,7 +1603,7 @@ proto.pkg.RemoveMessage.prototype.toObject = function(opt_includeInstance) {
  */
 proto.pkg.RemoveMessage.toObject = function(includeInstance, msg) {
   var f, obj = {
-    clientId: (f = msg.getClientId()) && proto.pkg.ClientID.toObject(includeInstance, f),
+    clientId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     path: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
@@ -1747,8 +1642,7 @@ proto.pkg.RemoveMessage.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new proto.pkg.ClientID;
-      reader.readMessage(value,proto.pkg.ClientID.deserializeBinaryFromReader);
+      var value = /** @type {string} */ (reader.readString());
       msg.setClientId(value);
       break;
     case 2:
@@ -1785,11 +1679,10 @@ proto.pkg.RemoveMessage.prototype.serializeBinary = function() {
 proto.pkg.RemoveMessage.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
   f = message.getClientId();
-  if (f != null) {
-    writer.writeMessage(
+  if (f.length > 0) {
+    writer.writeString(
       1,
-      f,
-      proto.pkg.ClientID.serializeBinaryToWriter
+      f
     );
   }
   f = message.getPath();
@@ -1803,39 +1696,20 @@ proto.pkg.RemoveMessage.serializeBinaryToWriter = function(message, writer) {
 
 
 /**
- * optional ClientID client_id = 1;
- * @return {?proto.pkg.ClientID}
+ * optional string client_id = 1;
+ * @return {string}
  */
 proto.pkg.RemoveMessage.prototype.getClientId = function() {
-  return /** @type{?proto.pkg.ClientID} */ (
-    jspb.Message.getWrapperField(this, proto.pkg.ClientID, 1));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
 /**
- * @param {?proto.pkg.ClientID|undefined} value
+ * @param {string} value
  * @return {!proto.pkg.RemoveMessage} returns this
-*/
+ */
 proto.pkg.RemoveMessage.prototype.setClientId = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.pkg.RemoveMessage} returns this
- */
-proto.pkg.RemoveMessage.prototype.clearClientId = function() {
-  return this.setClientId(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.pkg.RemoveMessage.prototype.hasClientId = function() {
-  return jspb.Message.getField(this, 1) != null;
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -1889,7 +1763,7 @@ proto.pkg.ListMessage.prototype.toObject = function(opt_includeInstance) {
  */
 proto.pkg.ListMessage.toObject = function(includeInstance, msg) {
   var f, obj = {
-    clientId: (f = msg.getClientId()) && proto.pkg.ClientID.toObject(includeInstance, f),
+    clientId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     path: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
@@ -1928,8 +1802,7 @@ proto.pkg.ListMessage.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new proto.pkg.ClientID;
-      reader.readMessage(value,proto.pkg.ClientID.deserializeBinaryFromReader);
+      var value = /** @type {string} */ (reader.readString());
       msg.setClientId(value);
       break;
     case 2:
@@ -1966,11 +1839,10 @@ proto.pkg.ListMessage.prototype.serializeBinary = function() {
 proto.pkg.ListMessage.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
   f = message.getClientId();
-  if (f != null) {
-    writer.writeMessage(
+  if (f.length > 0) {
+    writer.writeString(
       1,
-      f,
-      proto.pkg.ClientID.serializeBinaryToWriter
+      f
     );
   }
   f = message.getPath();
@@ -1984,39 +1856,20 @@ proto.pkg.ListMessage.serializeBinaryToWriter = function(message, writer) {
 
 
 /**
- * optional ClientID client_id = 1;
- * @return {?proto.pkg.ClientID}
+ * optional string client_id = 1;
+ * @return {string}
  */
 proto.pkg.ListMessage.prototype.getClientId = function() {
-  return /** @type{?proto.pkg.ClientID} */ (
-    jspb.Message.getWrapperField(this, proto.pkg.ClientID, 1));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
 /**
- * @param {?proto.pkg.ClientID|undefined} value
+ * @param {string} value
  * @return {!proto.pkg.ListMessage} returns this
-*/
+ */
 proto.pkg.ListMessage.prototype.setClientId = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.pkg.ListMessage} returns this
- */
-proto.pkg.ListMessage.prototype.clearClientId = function() {
-  return this.setClientId(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.pkg.ListMessage.prototype.hasClientId = function() {
-  return jspb.Message.getField(this, 1) != null;
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 

@@ -8,7 +8,6 @@ import {
   Stat,
   StatLabel,
   StatHelpText,
-  StatNumber,
   Badge,
 } from '@chakra-ui/react';
 import './Main.css';
@@ -31,7 +30,7 @@ export default function CommandHistory({ commandHistory }) {
         {commandHistory.map(c => {
           return (
             <>
-              <Stat>
+              <Stat py={2}>
                 <StatLabel>
                   <b>{c.command}</b>{' '}
                   {c.result === 'success' && (
@@ -39,7 +38,7 @@ export default function CommandHistory({ commandHistory }) {
                   )}
                 </StatLabel>
                 <StatHelpText>{c.argString}</StatHelpText>
-                {c.result === 'success' && <StatLabel>{c.result}</StatLabel>}
+                {c.result !== 'success' && <StatLabel>{c.result}</StatLabel>}
               </Stat>
               <Divider orientation="horizontal" />
             </>

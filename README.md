@@ -32,3 +32,8 @@ Please refer to the Zookeeper lab for more detailed setup instructions.
 Document your tests, known bugs, and extra features here.
 
 `./grpcwebproxy-v0.15.0-osx-x86_64 --backend_addr=:3333 --server_http_debug_port 3334 --allow_all_origins --run_tls_server=false`
+
+`protoc puddlestore.proto \
+--js_out=import_style=commonjs,binary:./src/puddlestore \
+--grpc-web_out=import_style=commonjs,mode=grpcwebtext:./src/puddlestore
+`

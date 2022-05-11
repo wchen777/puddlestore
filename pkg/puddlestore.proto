@@ -12,43 +12,43 @@ message ClientID {
 }
 
 message OpenMessage {
-    ClientID client_id = 1;
+    string client_id = 1;
     string filepath = 2;
     bool create = 3;
     bool write = 4;
 }
 
 message CloseMessage {
-    ClientID client_id = 1;
+    string client_id = 1;
     int32 fd = 2;
 }
 
 message ReadMessage {
-    ClientID client_id = 1;
+    string client_id = 1;
     int32 fd = 2;
     int32 offset = 3;
     int32 size = 4;
 }
 
 message WriteMessage {
-    ClientID client_id = 1;
+    string client_id = 1;
     int32 fd = 2;
     bytes data = 3;
     int32 offset = 4;
 }
 
 message MkdirMessage {
-    ClientID client_id = 1;
+    string client_id = 1;
     string path = 2;
 }
 
 message RemoveMessage {
-    ClientID client_id = 1;
+    string client_id = 1;
     string path = 2;
 }
 
 message ListMessage {
-    ClientID client_id = 1;
+    string client_id = 1;
     string path = 2;
 }
 

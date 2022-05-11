@@ -76,8 +76,11 @@ export default function Main() {
         setError(err.toString());
         onOpen(); // open error modal
       } else {
+        // wipe all client data
         setConnected(false);
         setClientData({});
+        setFDs([]);
+        setCommandHistory([]);
       }
     });
   };
@@ -93,7 +96,10 @@ export default function Main() {
           onOpen(); // open error modal
         } else {
           console.log('open response', openResp);
-          setFDs([...openFDs, { fd: openResp.getFd(), filepath: filepath }]);
+          setFDs([
+            ...openFDs,
+            { fd: openResp.getFd(), filepath: filepath, write },
+          ]);
         }
       }
     );
@@ -109,13 +115,24 @@ export default function Main() {
           setError(err.toString());
           onOpen(); // open error modal
         } else {
-          setFDs(openFDs.filter(file => file.fd !== fd));
+          setCommandHistory([
+            ...commandHistory,
+            {
+              command: 'close',
+              argString: `fd: ${fd}`,
+              result: 'success',
+            },
+          ]);
+          const newFDs = openFDs.filter(fdObj => fdObj.fd !== parseInt(fd));
+          console.log('newFDs', newFDs);
+          setFDs(newFDs);
         }
       }
     );
   };
 
   const readRequestPuddleStore = ({ fd, offset, size }) => {
+    let utf8Decode = new TextDecoder();
     client.clientRead(
       new ReadMessage([clientData.clientID, fd, offset, size]),
       {},
@@ -132,12 +149,13 @@ export default function Main() {
             - create new command result component
             - containing: data from command, and result of command
           */
+
           setCommandHistory([
             ...commandHistory,
             {
               command: 'read',
               argString: `fd: ${fd}, offset: ${offset}, size: ${size}`,
-              result: readResp.getData().toString(),
+              result: utf8Decode.decode(readResp.getData()),
             },
           ]);
         }
@@ -245,13 +263,15 @@ export default function Main() {
             {
               command: 'list',
               argString: `path: ${path}`,
-              result: listResp.getData().toString(),
+              result: listResp.array[0].toString(),
             },
           ]);
         }
       }
     );
   };
+
+  console.log(openFDs);
 
   // ------------------------------------------------------------------------ //
 
