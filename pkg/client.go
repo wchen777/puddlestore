@@ -261,18 +261,16 @@ func (c *PuddleClient) Close(fd int) error {
 	// open file
 
 	c.Lock()
+	defer c.Unlock()
+
 	openFile := c.openFiles[fd]
-	c.Unlock()
 
 	if openFile == nil {
 		return errors.New("close: file not open")
 	}
 
 	defer openFile.FileLock.Release()
-
-	c.Lock()
 	dirtyFileBool := c.dirtyFiles[fd]
-	c.Unlock()
 
 	// check dirty files set
 	if dirtyFileBool {
@@ -339,22 +337,21 @@ func (c *PuddleClient) Close(fd int) error {
 			return err
 		}
 
-		fmt.Println("close zk path: " + c.fsPath + openFile.INode.Filepath)
+		fmt.Println("close zk path: \n" + c.fsPath + openFile.INode.Filepath)
 
 		// write back the inode in zookeeper
 		c.zkConn.Set(c.fsPath+openFile.INode.Filepath, inodeBuf, -1)
 
-		// remove the file from the dirty files set
-		c.Lock()
+		fmt.Println("set path\n" + c.fsPath + openFile.INode.Filepath)
+
 		delete(c.dirtyFiles, fd)
+
+		fmt.Println("delete files\n" + c.fsPath + openFile.INode.Filepath)
 
 		// clear fd
 		c.openFiles[fd] = nil
-		c.Unlock()
 	}
-	c.Lock()
 	c.openFiles[fd] = nil
-	c.Unlock()
 
 	return nil
 }
