@@ -734,7 +734,9 @@ func (c *PuddleClient) getRandomTapestryNode() (string, error) {
 	fmt.Println("tap nodes in get random tap node: ", nodes)
 
 	// select random node to connect to
-	selectedNode := nodes[r.Intn(len(nodes))]
+	randNum := r.Intn(len(nodes))
+	fmt.Printf("random number %d", randNum)
+	selectedNode := nodes[randNum]
 
 	fmt.Println("selected node path: ", selectedNode)
 
@@ -757,6 +759,7 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 		return nil, err
 	}
 
+	fmt.Printf("tap addr: %s\n", tapNode.Addr)
 	return tapestry.Connect(tapNode.Addr)
 
 }
