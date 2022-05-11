@@ -6,7 +6,6 @@ import (
 
 	// "sort"
 
-	"fmt"
 	"sort"
 	"strings"
 
@@ -75,7 +74,6 @@ func (d *DistLock) Acquire() (err error) {
 
 	// 1. call create
 	// locks /dir/lock-
-	fmt.Printf("lock root: %s\n", (d.lockRoot))
 	path, err := d.zkConn.Create(d.lockRoot+lockPrefix, []byte(""), zk.FlagSequence|zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 
 	if err != nil {
@@ -99,10 +97,6 @@ func (d *DistLock) Acquire() (err error) {
 
 		// sort children array by string comparison
 		sort.Strings(chil)
-
-		fmt.Printf("children %s\n", chil)
-		fmt.Printf("d path: %s\n", d.path)
-		fmt.Printf("child path: %s\n", chil[0])
 
 		// if pathname in step 1 has lowest squence number suffix, client has lock and should exit protocol
 		if len(chil) <= 1 || strings.HasSuffix(d.path, chil[0]) {

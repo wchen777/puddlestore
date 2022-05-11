@@ -49,10 +49,10 @@ func (c *Cluster) NewClient() (Client, error) {
 	clientID := uuid.New()
 
 	client := &PuddleClient{
-		ID:     clientID.String(),
-		zkConn: conn,
-		fsPath: FS_ROOT,
-		// locksPath:    LOCK_ROOT,
+		ID:           clientID.String(),
+		zkConn:       conn,
+		fsPath:       FS_ROOT,
+		numReplicas:  c.config.NumReplicas,
 		tapestryPath: TAP_ADDRESS_ROOT,
 
 		openFiles:  make([]*OpenFile, CLIENT_OPEN_FILES_LIMIT),
@@ -108,7 +108,8 @@ func CreateCluster(config Config) (*Cluster, error) {
 
 		// encode tap node
 		Tapinode := &TapestryAddrNode{
-			Addr: node.tap.Node.Address, // contains tap address to connect to
+			Addr:   node.tap.Node.Address, // contains tap address to connect to
+			TapCli: nil,                   // stores created client.
 		}
 
 		// encode a inode with tap node address.
