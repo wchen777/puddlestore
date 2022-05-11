@@ -294,14 +294,14 @@ func (c *PuddleClient) Close(fd int) error {
 				// grab a random tapestry node path from zookeeper
 				client, err := c.getTapNodeConnected()
 
-				if err != nil && client == nil {
-					fmt.Printf("%s\n", err)
+				if err != nil {
+					fmt.Printf("replicas: %s\n", err)
 				} else {
 					// if connected success, store.
 					err = client.Store(newUID.String(), dataBlock)
 
 					if err != nil {
-						fmt.Printf("%s\n", err)
+						fmt.Printf("error store: %s\n", err)
 					}
 				}
 
