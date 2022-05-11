@@ -352,7 +352,9 @@ func (c *PuddleClient) Close(fd int) error {
 
 	}
 	fmt.Printf("fd %d\n", fd)
-	c.openFiles[fd] = nil
+
+	// set openfile to nonexistent, can't use same fd.
+	c.openFiles[fd] = &OpenFile{nil, nil, nil}
 
 	fmt.Printf("returning close\n")
 	return nil
