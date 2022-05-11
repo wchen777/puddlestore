@@ -749,8 +749,23 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 		return nil, err
 	}
 
-	return tapestry.Connect(tapNode.Addr)
+	// if not empty id, return connect client.
+	if tapNode.TapCli != nil {
+		return tapNode.TapCli, nil
+	} else {
+		client, err := tapestry.Connect(tapNode.Addr)
 
+		// if can't connect, return err
+		if err != nil {
+			return nil, err
+		}
+
+		// otherwise, add client to metadata and return
+		tapNode.TapCli = client
+
+		return client, nil
+
+	}
 }
 
 func (c *PuddleClient) isParentINodeDir(path string) bool {
