@@ -304,6 +304,9 @@ func (c *PuddleClient) Close(fd int) error {
 				// grab a random tapestry node path from zookeeper
 				client, err := c.getTapNodeConnected()
 
+				// test if this stops program.
+				memset.Memset(newData, 0)
+
 				if err != nil {
 					fmt.Printf("replicas: %s\n", err)
 				} else {
