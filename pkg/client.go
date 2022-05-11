@@ -286,9 +286,6 @@ func (c *PuddleClient) Close(fd int) error {
 
 		// keeps track of new uuids
 		var newUIDs []uuid.UUID
-
-		// double check this.
-		fmt.Printf("file length %d\n", openFile.Data)
 		for i := 0; i < len(openFile.Data); i += BLOCK_SIZE {
 
 			fmt.Printf("here\n")
