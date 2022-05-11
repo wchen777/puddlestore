@@ -242,7 +242,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 	// if we have specified write, add fd to dirty files (to be flushed on close)
 	if write {
-		fmt.Printf("fd %d\n", fd)
+		fmt.Printf("client: %s, fd %d\n", c.ID, fd)
 		c.dirtyFiles[fd] = true
 	}
 	c.Unlock()
