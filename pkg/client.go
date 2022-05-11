@@ -201,7 +201,8 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			return -1, err
 		}
 
-		data = make([]byte, newFileinode.Size+1) // create buffer to store file data
+		fmt.Printf("connected\n")
+		data = make([]byte, newFileinode.Size) // create buffer to store file data
 
 		// null terminate for reading
 		memset.Memset(data, 0)
@@ -211,6 +212,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		// get the file data from tapestry, loop through block uuids and get the data from tapestry
 		for _, blockUUID := range newFileinode.Blocks {
 			blockData, err := client.Get(blockUUID.String())
+			fmt.Printf("%s\n", blockData)
 
 			if err != nil {
 				distlock.Release()
