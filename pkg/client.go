@@ -773,8 +773,19 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 		return nil, err
 	}
 
-	// connects to tap belonging to inode.addr (which is addr of tap node)
-	return tapestry.Connect(tapNode.Addr)
+	// try up to 3 times to connect
+	client, err := tapestry.Connect(tapNode.Addr)
+	numRetries := 1
+
+	for client == nil || err != nil {
+		if numRetries == 3 {
+			return nil, err
+		}
+		client, err = tapestry.Connect(tapNode.Addr)
+		numRetries += 1
+	}
+
+	return client, nil
 
 }
 
