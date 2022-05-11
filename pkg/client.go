@@ -307,6 +307,9 @@ func (c *PuddleClient) Close(fd int) error {
 					fmt.Printf("replicas: %s\n", err)
 				} else {
 					// if connected success, store.
+					fmt.Printf("advert %s\n", newUID)
+					fmt.Printf("datablock %v\n", dataBlock)
+
 					err = client.Store(newUID.String(), dataBlock)
 
 					if err != nil {
