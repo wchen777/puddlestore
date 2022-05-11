@@ -18,6 +18,7 @@ import (
 
 // each block is 4096 bytes.(4kb)
 const BLOCK_SIZE = 4096
+const MAX_RETRIES = 5
 
 type Client interface {
 	// `Open` opens a file and returns a file descriptor. If the `create` is true and the
@@ -801,7 +802,7 @@ func (c *PuddleClient) getTapNodeConnected() (*tapestry.Client, error) {
 	numTried := 1
 
 	for err != nil || client == nil {
-		if numTried >= 3 {
+		if numTried >= MAX_RETRIES {
 			return nil, err
 		} else {
 
