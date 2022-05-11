@@ -62,29 +62,34 @@ message ListResponse {
     Success success = 2;
 }
 
+message OpenResponse {
+    int32 fd = 1;
+    Success success = 2;
+}
+
 
 message Empty {}
 
 
 service PuddleStore {
 
-    rpc Connect(Empty) returns (ClientID);
+    rpc ClientConnect(Empty) returns (ClientID);
 
-    rpc Exit(ClientID) returns (Success);
+    rpc ClientExit(ClientID) returns (Success);
 
-    rpc Open(OpenMessage) returns (Success);
+    rpc ClientOpen(OpenMessage) returns (OpenResponse);
 
-    rpc Close(CloseMessage) returns (Success);
+    rpc ClientClose(CloseMessage) returns (Success);
 
-    rpc Write(WriteMessage) returns (Success);
+    rpc ClientWrite(WriteMessage) returns (Success);
 
-    rpc Read(ReadMessage) returns (ReadResponse);
+    rpc ClientRead(ReadMessage) returns (ReadResponse);
 
-    rpc Mkdir(MkdirMessage) returns (Success);
+    rpc ClientMkdir(MkdirMessage) returns (Success);
 
-    rpc Remove(RemoveMessage) returns (Success);
+    rpc ClientRemove(RemoveMessage) returns (Success);
 
-    rpc List(ListMessage) returns (ListResponse);
+    rpc ClientList(ListMessage) returns (ListResponse);
 
 
 }

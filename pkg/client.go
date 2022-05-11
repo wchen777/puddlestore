@@ -59,6 +59,8 @@ type Client interface {
 
 	// Release zk connection. Subsequent calls on Exit()-ed clients should return error.
 	Exit()
+
+	GetID() string
 }
 
 // TODO: implement the Client interface
@@ -614,6 +616,10 @@ func (c *PuddleClient) Exit() {
 
 	// close zk connection
 	c.zkConn.Close()
+}
+
+func (c *PuddleClient) GetID() string {
+	return c.ID
 }
 
 // -------------------------- UTILITY/HELPER FUNCTIONS -------------------------- //

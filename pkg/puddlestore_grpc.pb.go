@@ -18,15 +18,15 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PuddleStoreClient interface {
-	Connect(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ClientID, error)
-	Exit(ctx context.Context, in *ClientID, opts ...grpc.CallOption) (*Success, error)
-	Open(ctx context.Context, in *OpenMessage, opts ...grpc.CallOption) (*Success, error)
-	Close(ctx context.Context, in *CloseMessage, opts ...grpc.CallOption) (*Success, error)
-	Write(ctx context.Context, in *WriteMessage, opts ...grpc.CallOption) (*Success, error)
-	Read(ctx context.Context, in *ReadMessage, opts ...grpc.CallOption) (*ReadResponse, error)
-	Mkdir(ctx context.Context, in *MkdirMessage, opts ...grpc.CallOption) (*Success, error)
-	Remove(ctx context.Context, in *RemoveMessage, opts ...grpc.CallOption) (*Success, error)
-	List(ctx context.Context, in *ListMessage, opts ...grpc.CallOption) (*ListResponse, error)
+	ClientConnect(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ClientID, error)
+	ClientExit(ctx context.Context, in *ClientID, opts ...grpc.CallOption) (*Success, error)
+	ClientOpen(ctx context.Context, in *OpenMessage, opts ...grpc.CallOption) (*OpenResponse, error)
+	ClientClose(ctx context.Context, in *CloseMessage, opts ...grpc.CallOption) (*Success, error)
+	ClientWrite(ctx context.Context, in *WriteMessage, opts ...grpc.CallOption) (*Success, error)
+	ClientRead(ctx context.Context, in *ReadMessage, opts ...grpc.CallOption) (*ReadResponse, error)
+	ClientMkdir(ctx context.Context, in *MkdirMessage, opts ...grpc.CallOption) (*Success, error)
+	ClientRemove(ctx context.Context, in *RemoveMessage, opts ...grpc.CallOption) (*Success, error)
+	ClientList(ctx context.Context, in *ListMessage, opts ...grpc.CallOption) (*ListResponse, error)
 }
 
 type puddleStoreClient struct {
@@ -37,81 +37,81 @@ func NewPuddleStoreClient(cc grpc.ClientConnInterface) PuddleStoreClient {
 	return &puddleStoreClient{cc}
 }
 
-func (c *puddleStoreClient) Connect(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ClientID, error) {
+func (c *puddleStoreClient) ClientConnect(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ClientID, error) {
 	out := new(ClientID)
-	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/Connect", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/ClientConnect", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *puddleStoreClient) Exit(ctx context.Context, in *ClientID, opts ...grpc.CallOption) (*Success, error) {
+func (c *puddleStoreClient) ClientExit(ctx context.Context, in *ClientID, opts ...grpc.CallOption) (*Success, error) {
 	out := new(Success)
-	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/Exit", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/ClientExit", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *puddleStoreClient) Open(ctx context.Context, in *OpenMessage, opts ...grpc.CallOption) (*Success, error) {
+func (c *puddleStoreClient) ClientOpen(ctx context.Context, in *OpenMessage, opts ...grpc.CallOption) (*OpenResponse, error) {
+	out := new(OpenResponse)
+	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/ClientOpen", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *puddleStoreClient) ClientClose(ctx context.Context, in *CloseMessage, opts ...grpc.CallOption) (*Success, error) {
 	out := new(Success)
-	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/Open", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/ClientClose", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *puddleStoreClient) Close(ctx context.Context, in *CloseMessage, opts ...grpc.CallOption) (*Success, error) {
+func (c *puddleStoreClient) ClientWrite(ctx context.Context, in *WriteMessage, opts ...grpc.CallOption) (*Success, error) {
 	out := new(Success)
-	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/Close", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/ClientWrite", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *puddleStoreClient) Write(ctx context.Context, in *WriteMessage, opts ...grpc.CallOption) (*Success, error) {
-	out := new(Success)
-	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/Write", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *puddleStoreClient) Read(ctx context.Context, in *ReadMessage, opts ...grpc.CallOption) (*ReadResponse, error) {
+func (c *puddleStoreClient) ClientRead(ctx context.Context, in *ReadMessage, opts ...grpc.CallOption) (*ReadResponse, error) {
 	out := new(ReadResponse)
-	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/Read", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/ClientRead", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *puddleStoreClient) Mkdir(ctx context.Context, in *MkdirMessage, opts ...grpc.CallOption) (*Success, error) {
+func (c *puddleStoreClient) ClientMkdir(ctx context.Context, in *MkdirMessage, opts ...grpc.CallOption) (*Success, error) {
 	out := new(Success)
-	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/Mkdir", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/ClientMkdir", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *puddleStoreClient) Remove(ctx context.Context, in *RemoveMessage, opts ...grpc.CallOption) (*Success, error) {
+func (c *puddleStoreClient) ClientRemove(ctx context.Context, in *RemoveMessage, opts ...grpc.CallOption) (*Success, error) {
 	out := new(Success)
-	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/Remove", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/ClientRemove", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *puddleStoreClient) List(ctx context.Context, in *ListMessage, opts ...grpc.CallOption) (*ListResponse, error) {
+func (c *puddleStoreClient) ClientList(ctx context.Context, in *ListMessage, opts ...grpc.CallOption) (*ListResponse, error) {
 	out := new(ListResponse)
-	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/List", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pkg.PuddleStore/ClientList", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -122,15 +122,15 @@ func (c *puddleStoreClient) List(ctx context.Context, in *ListMessage, opts ...g
 // All implementations must embed UnimplementedPuddleStoreServer
 // for forward compatibility
 type PuddleStoreServer interface {
-	Connect(context.Context, *Empty) (*ClientID, error)
-	Exit(context.Context, *ClientID) (*Success, error)
-	Open(context.Context, *OpenMessage) (*Success, error)
-	Close(context.Context, *CloseMessage) (*Success, error)
-	Write(context.Context, *WriteMessage) (*Success, error)
-	Read(context.Context, *ReadMessage) (*ReadResponse, error)
-	Mkdir(context.Context, *MkdirMessage) (*Success, error)
-	Remove(context.Context, *RemoveMessage) (*Success, error)
-	List(context.Context, *ListMessage) (*ListResponse, error)
+	ClientConnect(context.Context, *Empty) (*ClientID, error)
+	ClientExit(context.Context, *ClientID) (*Success, error)
+	ClientOpen(context.Context, *OpenMessage) (*OpenResponse, error)
+	ClientClose(context.Context, *CloseMessage) (*Success, error)
+	ClientWrite(context.Context, *WriteMessage) (*Success, error)
+	ClientRead(context.Context, *ReadMessage) (*ReadResponse, error)
+	ClientMkdir(context.Context, *MkdirMessage) (*Success, error)
+	ClientRemove(context.Context, *RemoveMessage) (*Success, error)
+	ClientList(context.Context, *ListMessage) (*ListResponse, error)
 	mustEmbedUnimplementedPuddleStoreServer()
 }
 
@@ -138,32 +138,32 @@ type PuddleStoreServer interface {
 type UnimplementedPuddleStoreServer struct {
 }
 
-func (UnimplementedPuddleStoreServer) Connect(context.Context, *Empty) (*ClientID, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Connect not implemented")
+func (UnimplementedPuddleStoreServer) ClientConnect(context.Context, *Empty) (*ClientID, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientConnect not implemented")
 }
-func (UnimplementedPuddleStoreServer) Exit(context.Context, *ClientID) (*Success, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Exit not implemented")
+func (UnimplementedPuddleStoreServer) ClientExit(context.Context, *ClientID) (*Success, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientExit not implemented")
 }
-func (UnimplementedPuddleStoreServer) Open(context.Context, *OpenMessage) (*Success, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Open not implemented")
+func (UnimplementedPuddleStoreServer) ClientOpen(context.Context, *OpenMessage) (*OpenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientOpen not implemented")
 }
-func (UnimplementedPuddleStoreServer) Close(context.Context, *CloseMessage) (*Success, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Close not implemented")
+func (UnimplementedPuddleStoreServer) ClientClose(context.Context, *CloseMessage) (*Success, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientClose not implemented")
 }
-func (UnimplementedPuddleStoreServer) Write(context.Context, *WriteMessage) (*Success, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Write not implemented")
+func (UnimplementedPuddleStoreServer) ClientWrite(context.Context, *WriteMessage) (*Success, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientWrite not implemented")
 }
-func (UnimplementedPuddleStoreServer) Read(context.Context, *ReadMessage) (*ReadResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
+func (UnimplementedPuddleStoreServer) ClientRead(context.Context, *ReadMessage) (*ReadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientRead not implemented")
 }
-func (UnimplementedPuddleStoreServer) Mkdir(context.Context, *MkdirMessage) (*Success, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Mkdir not implemented")
+func (UnimplementedPuddleStoreServer) ClientMkdir(context.Context, *MkdirMessage) (*Success, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientMkdir not implemented")
 }
-func (UnimplementedPuddleStoreServer) Remove(context.Context, *RemoveMessage) (*Success, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Remove not implemented")
+func (UnimplementedPuddleStoreServer) ClientRemove(context.Context, *RemoveMessage) (*Success, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientRemove not implemented")
 }
-func (UnimplementedPuddleStoreServer) List(context.Context, *ListMessage) (*ListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+func (UnimplementedPuddleStoreServer) ClientList(context.Context, *ListMessage) (*ListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientList not implemented")
 }
 func (UnimplementedPuddleStoreServer) mustEmbedUnimplementedPuddleStoreServer() {}
 
@@ -178,164 +178,164 @@ func RegisterPuddleStoreServer(s grpc.ServiceRegistrar, srv PuddleStoreServer) {
 	s.RegisterService(&PuddleStore_ServiceDesc, srv)
 }
 
-func _PuddleStore_Connect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PuddleStore_ClientConnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PuddleStoreServer).Connect(ctx, in)
+		return srv.(PuddleStoreServer).ClientConnect(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pkg.PuddleStore/Connect",
+		FullMethod: "/pkg.PuddleStore/ClientConnect",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PuddleStoreServer).Connect(ctx, req.(*Empty))
+		return srv.(PuddleStoreServer).ClientConnect(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PuddleStore_Exit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PuddleStore_ClientExit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ClientID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PuddleStoreServer).Exit(ctx, in)
+		return srv.(PuddleStoreServer).ClientExit(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pkg.PuddleStore/Exit",
+		FullMethod: "/pkg.PuddleStore/ClientExit",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PuddleStoreServer).Exit(ctx, req.(*ClientID))
+		return srv.(PuddleStoreServer).ClientExit(ctx, req.(*ClientID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PuddleStore_Open_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PuddleStore_ClientOpen_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(OpenMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PuddleStoreServer).Open(ctx, in)
+		return srv.(PuddleStoreServer).ClientOpen(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pkg.PuddleStore/Open",
+		FullMethod: "/pkg.PuddleStore/ClientOpen",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PuddleStoreServer).Open(ctx, req.(*OpenMessage))
+		return srv.(PuddleStoreServer).ClientOpen(ctx, req.(*OpenMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PuddleStore_Close_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PuddleStore_ClientClose_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CloseMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PuddleStoreServer).Close(ctx, in)
+		return srv.(PuddleStoreServer).ClientClose(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pkg.PuddleStore/Close",
+		FullMethod: "/pkg.PuddleStore/ClientClose",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PuddleStoreServer).Close(ctx, req.(*CloseMessage))
+		return srv.(PuddleStoreServer).ClientClose(ctx, req.(*CloseMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PuddleStore_Write_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PuddleStore_ClientWrite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(WriteMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PuddleStoreServer).Write(ctx, in)
+		return srv.(PuddleStoreServer).ClientWrite(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pkg.PuddleStore/Write",
+		FullMethod: "/pkg.PuddleStore/ClientWrite",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PuddleStoreServer).Write(ctx, req.(*WriteMessage))
+		return srv.(PuddleStoreServer).ClientWrite(ctx, req.(*WriteMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PuddleStore_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PuddleStore_ClientRead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ReadMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PuddleStoreServer).Read(ctx, in)
+		return srv.(PuddleStoreServer).ClientRead(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pkg.PuddleStore/Read",
+		FullMethod: "/pkg.PuddleStore/ClientRead",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PuddleStoreServer).Read(ctx, req.(*ReadMessage))
+		return srv.(PuddleStoreServer).ClientRead(ctx, req.(*ReadMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PuddleStore_Mkdir_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PuddleStore_ClientMkdir_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MkdirMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PuddleStoreServer).Mkdir(ctx, in)
+		return srv.(PuddleStoreServer).ClientMkdir(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pkg.PuddleStore/Mkdir",
+		FullMethod: "/pkg.PuddleStore/ClientMkdir",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PuddleStoreServer).Mkdir(ctx, req.(*MkdirMessage))
+		return srv.(PuddleStoreServer).ClientMkdir(ctx, req.(*MkdirMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PuddleStore_Remove_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PuddleStore_ClientRemove_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PuddleStoreServer).Remove(ctx, in)
+		return srv.(PuddleStoreServer).ClientRemove(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pkg.PuddleStore/Remove",
+		FullMethod: "/pkg.PuddleStore/ClientRemove",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PuddleStoreServer).Remove(ctx, req.(*RemoveMessage))
+		return srv.(PuddleStoreServer).ClientRemove(ctx, req.(*RemoveMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PuddleStore_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PuddleStore_ClientList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PuddleStoreServer).List(ctx, in)
+		return srv.(PuddleStoreServer).ClientList(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pkg.PuddleStore/List",
+		FullMethod: "/pkg.PuddleStore/ClientList",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PuddleStoreServer).List(ctx, req.(*ListMessage))
+		return srv.(PuddleStoreServer).ClientList(ctx, req.(*ListMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -348,40 +348,40 @@ var PuddleStore_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*PuddleStoreServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Connect",
-			Handler:    _PuddleStore_Connect_Handler,
+			MethodName: "ClientConnect",
+			Handler:    _PuddleStore_ClientConnect_Handler,
 		},
 		{
-			MethodName: "Exit",
-			Handler:    _PuddleStore_Exit_Handler,
+			MethodName: "ClientExit",
+			Handler:    _PuddleStore_ClientExit_Handler,
 		},
 		{
-			MethodName: "Open",
-			Handler:    _PuddleStore_Open_Handler,
+			MethodName: "ClientOpen",
+			Handler:    _PuddleStore_ClientOpen_Handler,
 		},
 		{
-			MethodName: "Close",
-			Handler:    _PuddleStore_Close_Handler,
+			MethodName: "ClientClose",
+			Handler:    _PuddleStore_ClientClose_Handler,
 		},
 		{
-			MethodName: "Write",
-			Handler:    _PuddleStore_Write_Handler,
+			MethodName: "ClientWrite",
+			Handler:    _PuddleStore_ClientWrite_Handler,
 		},
 		{
-			MethodName: "Read",
-			Handler:    _PuddleStore_Read_Handler,
+			MethodName: "ClientRead",
+			Handler:    _PuddleStore_ClientRead_Handler,
 		},
 		{
-			MethodName: "Mkdir",
-			Handler:    _PuddleStore_Mkdir_Handler,
+			MethodName: "ClientMkdir",
+			Handler:    _PuddleStore_ClientMkdir_Handler,
 		},
 		{
-			MethodName: "Remove",
-			Handler:    _PuddleStore_Remove_Handler,
+			MethodName: "ClientRemove",
+			Handler:    _PuddleStore_ClientRemove_Handler,
 		},
 		{
-			MethodName: "List",
-			Handler:    _PuddleStore_List_Handler,
+			MethodName: "ClientList",
+			Handler:    _PuddleStore_ClientList_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

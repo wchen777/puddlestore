@@ -13,9 +13,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// node := webhello.MyWebHelloServer{Addr: listener.Addr()}
-	cluster, err := puddlestore.CreateCluster(puddlestore.DefaultConfig())
+
+	// create instance of puddlestore server
+	node := puddlestore.PuddleStoreServerInstance{
+		Addr: listener.Addr(),
+	}
+	// initialize the cluster
+	node.InitCluster()
+
+	// create a new grpc server
 	server := grpc.NewServer()
+
+	// register the puddlestore server with the grpc server
+	puddlestore.RegisterPuddleStoreServer(server, &node)
 
 	// webhello.RegisterWebHelloServer(server, &node)
 	fmt.Println("RPC serving on :3333")
