@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"sync"
 )
@@ -15,8 +16,8 @@ type PuddleStoreServerInstance struct {
 	Clients map[string]*Client // map of client ID to Client
 }
 
-func (s *PuddleStoreServerInstance) GetAddr() net.Addr {
-	return s.Addr
+func (s *PuddleStoreServerInstance) InitStruct() {
+	s.Clients = make(map[string]*Client)
 }
 
 func (s *PuddleStoreServerInstance) InitCluster() error {
@@ -32,6 +33,11 @@ func (s *PuddleStoreServerInstance) InitCluster() error {
 	s.Cluster = cluster
 
 	return nil
+}
+
+func (s *PuddleStoreServerInstance) Init() {
+	s.InitStruct()
+	s.InitCluster()
 }
 
 /*
@@ -50,6 +56,8 @@ func (s *PuddleStoreServerInstance) ClientConnect(ctx context.Context, e *Empty)
 
 	s.Clients[client.GetID()] = &client
 
+	fmt.Println("Client connected: ", client.GetID())
+
 	return &ClientID{
 		Id: client.GetID(),
 	}, nil
@@ -64,6 +72,8 @@ func (s *PuddleStoreServerInstance) ClientExit(ctx context.Context, ID *ClientID
 	defer s.Mutex.Unlock()
 
 	client := *s.Clients[ID.Id]
+
+	fmt.Println("Client exited: ", client.GetID())
 
 	client.Exit()
 

@@ -24,8 +24,9 @@ func TestMkDir(t *testing.T) {
 		t.Fatal("should have been made")
 	}
 
-	size, _ := client.List("/puddlestore")
+	size, _ := client.List("")
 
+	// should get everything below /puddlestore
 	if len(size) != 1 {
 		t.Fatal("should only be one directory")
 	}

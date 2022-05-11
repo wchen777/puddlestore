@@ -37,7 +37,13 @@ func TestRemoveFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = client.Open("/test00", true, true)
+	fd, err := client.Open("/test00", true, true)
+
+	if err != nil {
+		t.Fatal("should not have error")
+	}
+
+	err = client.Close(fd)
 
 	if err != nil {
 		t.Fatal("should not have error")

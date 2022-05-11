@@ -18,8 +18,8 @@ func main() {
 	ps := puddlestore.PuddleStoreServerInstance{
 		Addr: listener.Addr(),
 	}
-	// initialize the cluster
-	ps.InitCluster()
+	// initialize the server
+	ps.Init()
 
 	// create a new grpc server
 	server := grpc.NewServer()

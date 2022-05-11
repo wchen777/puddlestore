@@ -1,0 +1,96 @@
+syntax = "proto3";
+package pkg;
+
+option go_package = "pkg/pkg"; // ???
+
+message Success {
+    bool ok = 1;
+}
+
+message ClientID {
+    string id = 1;
+}
+
+message OpenMessage {
+    ClientID client_id = 1;
+    string filepath = 2;
+    bool create = 3;
+    bool write = 4;
+}
+
+message CloseMessage {
+    ClientID client_id = 1;
+    int32 fd = 2;
+}
+
+message ReadMessage {
+    ClientID client_id = 1;
+    int32 fd = 2;
+    int32 offset = 3;
+    int32 size = 4;
+}
+
+message WriteMessage {
+    ClientID client_id = 1;
+    int32 fd = 2;
+    bytes data = 3;
+    int32 offset = 4;
+}
+
+message MkdirMessage {
+    ClientID client_id = 1;
+    string path = 2;
+}
+
+message RemoveMessage {
+    ClientID client_id = 1;
+    string path = 2;
+}
+
+message ListMessage {
+    ClientID client_id = 1;
+    string path = 2;
+}
+
+message ReadResponse {
+    bytes data = 1;
+    Success success = 2;
+}
+
+message ListResponse {
+    repeated string result = 1;
+    Success success = 2;
+}
+
+message OpenResponse {
+    int32 fd = 1;
+    Success success = 2;
+}
+
+
+message Empty {}
+
+
+service PuddleStore {
+
+    rpc ClientConnect(Empty) returns (ClientID);
+
+    rpc ClientExit(ClientID) returns (Success);
+
+    rpc ClientOpen(OpenMessage) returns (OpenResponse);
+
+    rpc ClientClose(CloseMessage) returns (Success);
+
+    rpc ClientWrite(WriteMessage) returns (Success);
+
+    rpc ClientRead(ReadMessage) returns (ReadResponse);
+
+    rpc ClientMkdir(MkdirMessage) returns (Success);
+
+    rpc ClientRemove(RemoveMessage) returns (Success);
+
+    rpc ClientList(ListMessage) returns (ListResponse);
+
+
+}
+

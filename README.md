@@ -6,16 +6,16 @@ You will need to use your own Tapestry implementation or the TA implementation o
 
 Steps:
 
-1. Download the Tapestry implementation to a local folder. 
+1. Download the Tapestry implementation to a local folder.
 2. Update this line in `go.mod`
 
 ```
 replace tapestry => /path/to/your/tapestry/implementation/root/folder
 ```
 
-so that imports of `tapestry` now point to your local folder where you've downloaded Tapestry. 
+so that imports of `tapestry` now point to your local folder where you've downloaded Tapestry.
 
-That's it! When running tests in Gradescope, we will automatically rewrite this line to point to our TA implementation, so you will be tested against our implementation and not be penalized for any issues of your own. 
+That's it! When running tests in Gradescope, we will automatically rewrite this line to point to our TA implementation, so you will be tested against our implementation and not be penalized for any issues of your own.
 
 ### Prerequisites for using Zookeeper
 
@@ -29,4 +29,6 @@ Please refer to the Zookeeper lab for more detailed setup instructions.
 
 ### Some expectations for using this README
 
-Document your tests, known bugs, and extra features here. 
+Document your tests, known bugs, and extra features here.
+
+`./grpcwebproxy-v0.15.0-osx-x86_64 --backend_addr=:3333 --server_http_debug_port 3334 --allow_all_origins --run_tls_server=false`
