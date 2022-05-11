@@ -59,11 +59,9 @@ type Client interface {
 	Exit()
 }
 
-// TODO: implement the Client interface
-
 type OpenFile struct {
 	INode    *inode
-	Data     []byte    // cached file block data, TODO: how do we get all the data in one place from tapestry blocks ?
+	Data     []byte    // cached file block data
 	FileLock *DistLock // file lock
 }
 
@@ -493,7 +491,6 @@ func (c *PuddleClient) Remove(path string) error {
 	// search for path in zookeeper
 	exists, _, err := c.zkConn.Exists(c.fsPath + path)
 
-	// TODO: check if file/dir
 	// ed explains how to handle both cases.
 	if err != nil {
 		return err
@@ -560,7 +557,7 @@ func (c *PuddleClient) Remove(path string) error {
 }
 
 // list file & directory names (not full names) under `path`
-func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths error here! i think
+func (c *PuddleClient) List(path string) ([]string, error) {
 
 	// clean path to remove trailing dir.
 	path = strings.TrimSuffix(path, "/")
@@ -635,7 +632,7 @@ func (c *PuddleClient) findNextFreeFD() int {
 		}
 	}
 
-	// if no empty index return -1 (MAX OPEN FILES IS 256, SHOULD WE HAVE A LIMIT? TODO: ask about this)
+	// if no empty index return -1
 	return -1
 
 }
@@ -741,7 +738,7 @@ func (c *PuddleClient) getRandomTapestryNode(triedIndices []int) (string, []int,
 
 	selectedNode := nodes[randNum]
 
-	return c.tapestryPath + "/" + selectedNode, triedIndices, nil // TODO: do we need to append tapestry path here? yes
+	return c.tapestryPath + "/" + selectedNode, triedIndices, nil
 }
 
 // checks if rand int is contained already.
