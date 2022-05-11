@@ -11,6 +11,58 @@ message ClientID {
     string id = 1;
 }
 
+message OpenMessage {
+    ClientID client_id = 1;
+    string filepath = 2;
+    bool create = 3;
+    bool write = 4;
+}
+
+message CloseMessage {
+    ClientID client_id = 1;
+    int32 fd = 2;
+}
+
+message ReadMessage {
+    ClientID client_id = 1;
+    int32 fd = 2;
+    int32 offset = 3;
+    int32 size = 4;
+}
+
+message WriteMessage {
+    ClientID client_id = 1;
+    int32 fd = 2;
+    bytes data = 3;
+    int32 offset = 4;
+}
+
+message MkdirMessage {
+    ClientID client_id = 1;
+    string path = 2;
+}
+
+message RemoveMessage {
+    ClientID client_id = 1;
+    string path = 2;
+}
+
+message ListMessage {
+    ClientID client_id = 1;
+    string path = 2;
+}
+
+message ReadResponse {
+    bytes data = 1;
+    Success success = 2;
+}
+
+message ListResponse {
+    repeated string result = 1;
+    Success success = 2;
+}
+
+
 message Empty {}
 
 
@@ -18,15 +70,21 @@ service PuddleStore {
 
     rpc Connect(Empty) returns (ClientID);
 
-    rpc Disconnect(ClientID) returns (Success);
+    rpc Exit(ClientID) returns (Success);
 
+    rpc Open(OpenMessage) returns (Success);
 
-    // rpc Send(ChatMessage) returns (Success);
+    rpc Close(CloseMessage) returns (Success);
 
+    rpc Write(WriteMessage) returns (Success);
 
-    // rpc Fetch(Empty) returns (ChatMessages);
+    rpc Read(ReadMessage) returns (ReadResponse);
 
-    // rpc List(Empty) returns (UserList);
+    rpc Mkdir(MkdirMessage) returns (Success);
+
+    rpc Remove(RemoveMessage) returns (Success);
+
+    rpc List(ListMessage) returns (ListResponse);
 
 
 }
