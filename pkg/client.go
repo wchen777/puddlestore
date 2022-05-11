@@ -18,7 +18,7 @@ import (
 
 // each block is 4096 bytes.(4kb)
 const BLOCK_SIZE = 4096
-const MAX_RETRIES = 5
+const MAX_RETRIES = 10
 
 type Client interface {
 	// `Open` opens a file and returns a file descriptor. If the `create` is true and the
@@ -721,7 +721,9 @@ func (c *PuddleClient) getRandomTapestryNode() (string, error) {
 	fmt.Println("tap nodes in get random tap node: ", nodes)
 
 	// select random node to connect to
-	selectedNode := nodes[r.Intn(len(nodes))]
+	randNum := r.Intn(len(nodes))
+	fmt.Printf("random number %d", randNum)
+	selectedNode := nodes[randNum]
 
 	fmt.Println("selected node path: ", selectedNode)
 
@@ -744,6 +746,7 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 		return nil, err
 	}
 
+	fmt.Printf("tap addr: %s\n", tapNode.Addr)
 	return tapestry.Connect(tapNode.Addr)
 
 }
