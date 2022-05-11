@@ -24,7 +24,12 @@ func TestLock(t *testing.T) {
 		t.Fatal("should have err ")
 	}
 
-	_, err = client.Open("/test10", true, false)
+	client2, err := cluster.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client2.Open("/test5", true, false)
 
 	// should not be nil
 	if err != nil {

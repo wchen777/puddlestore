@@ -12,7 +12,7 @@ func writeFile(client puddlestore.Client, path string, offset uint64, data []byt
 	}
 	defer client.Close(fd)
 
-	return client.Write(fd, 0, data)
+	return client.Write(fd, offset, data)
 }
 
 func readFile(client puddlestore.Client, path string, offset, size uint64) ([]byte, error) {
@@ -49,6 +49,46 @@ func TestReadWrite(t *testing.T) {
 	}
 
 	if in != string(out) {
+		t.Fatalf("Expected: %v, Got: %v", in, string(out))
+	}
+
+	client2, err := cluster.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	in = "one"
+	// error here in write.
+	if err := writeFile(client2, "/a", 4, []byte(in)); err != nil {
+		t.Fatal(err)
+	}
+
+	if out, err = readFile(client2, "/a", 0, 10); err != nil {
+		t.Fatal(err)
+	}
+
+	output := "testone"
+	if output != string(out) {
+		t.Fatalf("Expected: %v, Got: %v", in, string(out))
+	}
+
+	client3, err := cluster.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	in = "two"
+	// error here in write.
+	if err := writeFile(client3, "/a", 7, []byte(in)); err != nil {
+		t.Fatal(err)
+	}
+
+	if out, err = readFile(client3, "/a", 0, 14); err != nil {
+		t.Fatal(err)
+	}
+
+	output = "testonetwo"
+	if output != string(out) {
 		t.Fatalf("Expected: %v, Got: %v", in, string(out))
 	}
 }

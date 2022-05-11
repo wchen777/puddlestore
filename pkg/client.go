@@ -92,6 +92,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 	// clean path to remove trailing dir.
 	path = strings.TrimSuffix(path, "/")
+	fmt.Printf("write open first %v\n", write)
 
 	// error check empty path
 	if path == "" {
@@ -202,12 +203,19 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			return -1, err
 		}
 
-		data = make([]byte, newFileinode.Size) // create buffer to store file data
-		writePtr := 0                          // write pointer
+		data = make([]byte, newFileinode.Size+1) // create buffer to store file data
+
+		// null terminate for reading
+		memset.Memset(data, 0)
+
+		writePtr := 0 // write pointer
 
 		// get the file data from tapestry, loop through block uuids and get the data from tapestry
 		for _, blockUUID := range newFileinode.Blocks {
+			fmt.Printf("getting block %s\n", blockUUID.String())
 			blockData, err := client.Get(blockUUID.String())
+
+			fmt.Printf("block data: %d, err: %s, inode size: %d\n", blockData, err, newFileinode.Size)
 
 			if err != nil {
 				distlock.Release()
@@ -216,6 +224,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 			// fill data byte array
 			writePtr += copy(data[writePtr:], blockData) // i'm getting a linter warning here??
+			fmt.Printf("data: %s\n", data)
 		}
 
 		// fmt.Println("data after open: ", data)
@@ -223,15 +232,16 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	}
 
 	// get next client file descriptor
+	c.Lock()
 	fd := c.findNextFreeFD()
 
 	if fd == -1 { // if there are no free file descriptors, return error
 		distlock.Release()
+		c.Unlock()
 		return -1, errors.New("no free file descriptors, ENOMEM")
 	}
 
 	// add the file to the open files list
-	c.Lock()
 	c.openFiles[fd] = &OpenFile{
 		INode:    newFileinode,
 		Data:     data,
@@ -242,6 +252,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 	// if we have specified write, add fd to dirty files (to be flushed on close)
 	if write {
+		fmt.Printf("fd %d\n", fd)
 		c.dirtyFiles[fd] = true
 	}
 	c.Unlock()
@@ -254,6 +265,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 func (c *PuddleClient) Close(fd int) error {
 
 	// open file
+
 	c.Lock()
 	openFile := c.openFiles[fd]
 	c.Unlock()
@@ -287,7 +299,7 @@ func (c *PuddleClient) Close(fd int) error {
 			}
 
 			// new 4kb data
-			dataBlock := openFile.Data[i:end]
+			newData := openFile.Data[i:end]
 
 			// create new uuid, store into tapestry uuid associated with block
 			newUID, err := uuid.NewRandom()
@@ -307,10 +319,7 @@ func (c *PuddleClient) Close(fd int) error {
 					fmt.Printf("replicas: %s\n", err)
 				} else {
 					// if connected success, store.
-					fmt.Printf("advert %s\n", newUID)
-					fmt.Printf("datablock %v\n", dataBlock)
-
-					err = client.Store(newUID.String(), dataBlock)
+					err = client.Store(newUID.String(), newData)
 
 					if err != nil {
 						fmt.Printf("error store: %s\n", err)
@@ -410,6 +419,7 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 
 	endPos := offset + uint64(len(data)) // the final position of the data to be written
 
+	fmt.Printf("end pos %d, offset %d, length %d", endPos, offset, uint64(len(data)))
 	// if the end position is beyond the size of the file, set the size
 	if endPos > openFile.INode.Size {
 		openFile.INode.Size = endPos
@@ -422,11 +432,15 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 
 	// copy the old data into the new buffer
 	copy(newData, openFile.Data)
+	fmt.Printf("new data %d\n", newData)
 
 	// overwrite offset -> offset + len(data) with the new data
 	copy(newData[offset:], data)
+	fmt.Printf("new data 2: %d\n", newData)
 
 	openFile.Data = newData // set the new data
+
+	fmt.Printf("new open file data: %d", openFile.Data)
 
 	return nil
 }
@@ -620,8 +634,6 @@ func (c *PuddleClient) Exit() {
 func (c *PuddleClient) findNextFreeFD() int {
 
 	// look through the open files array, find first empty index
-	c.Lock()
-	defer c.Unlock()
 	for i, f := range c.openFiles {
 		if f == nil {
 			return i
