@@ -316,7 +316,11 @@ func (c *PuddleClient) Close(fd int) error {
 
 			// fmt.Printf("stored %s\n", dataBlock)
 
-			client.Store(newUID.String(), dataBlock)
+			err = client.Store(newUID.String(), dataBlock)
+			if err != nil {
+				fmt.Printf("%s\n", err)
+				return err
+			}
 
 			fmt.Printf("id %s\n", newUID)
 
@@ -335,8 +339,6 @@ func (c *PuddleClient) Close(fd int) error {
 		inodeBuf, err := encodeInode(*openFile.INode)
 
 		if err != nil {
-			// close conn
-			// c.zkConn.Close()
 			return err
 		}
 
@@ -347,10 +349,10 @@ func (c *PuddleClient) Close(fd int) error {
 
 		// remove the file from the dirty files set
 		delete(c.dirtyFiles, fd)
-	}
 
-	// clear fd
-	c.openFiles[fd] = nil
+		// clear fd
+		c.openFiles[fd] = nil
+	}
 
 	return nil
 }
