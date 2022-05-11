@@ -195,8 +195,6 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 		// Connect to a tap node
 		client, err := c.getTapNodeConnected()
-		fmt.Printf("client in open: %v", client)
-		fmt.Printf("released %s\n", err)
 
 		if err != nil {
 			distlock.Release()
@@ -212,10 +210,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 		// get the file data from tapestry, loop through block uuids and get the data from tapestry
 		for _, blockUUID := range newFileinode.Blocks {
-			fmt.Printf("getting block %s\n", blockUUID.String())
 			blockData, err := client.Get(blockUUID.String())
-
-			fmt.Printf("block data: %d, err: %s, inode size: %d\n", blockData, err, newFileinode.Size)
 
 			if err != nil {
 				distlock.Release()
@@ -224,7 +219,6 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 			// fill data byte array
 			writePtr += copy(data[writePtr:], blockData) // i'm getting a linter warning here??
-			fmt.Printf("data: %s\n", data)
 		}
 
 		// fmt.Println("data after open: ", data)
@@ -419,7 +413,6 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 
 	endPos := offset + uint64(len(data)) // the final position of the data to be written
 
-	fmt.Printf("end pos %d, offset %d, length %d", endPos, offset, uint64(len(data)))
 	// if the end position is beyond the size of the file, set the size
 	if endPos > openFile.INode.Size {
 		openFile.INode.Size = endPos
@@ -432,15 +425,11 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 
 	// copy the old data into the new buffer
 	copy(newData, openFile.Data)
-	fmt.Printf("new data %d\n", newData)
 
 	// overwrite offset -> offset + len(data) with the new data
 	copy(newData[offset:], data)
-	fmt.Printf("new data 2: %d\n", newData)
 
 	openFile.Data = newData // set the new data
-
-	fmt.Printf("new open file data: %d", openFile.Data)
 
 	return nil
 }
@@ -725,8 +714,6 @@ func (c *PuddleClient) getRandomTapestryNode(triedIndices []int) (string, []int,
 
 	// get children of tapestry/node- to get tap nodes
 	nodes, _, err := c.zkConn.Children(c.tapestryPath)
-
-	fmt.Printf("nodes %v\n", nodes)
 
 	if err != nil {
 		fmt.Println("error getting children of tapestry/node-" + err.Error())
