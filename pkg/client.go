@@ -263,13 +263,6 @@ func (c *PuddleClient) Close(fd int) error {
 	if c.dirtyFiles[fd] {
 		// flush the file
 
-		// grab a random tapestry node path from zookeeper
-		client, err := c.getTapNodeConnected()
-
-		if err != nil {
-			return err
-		}
-
 		// keeps track of end of array to get correct slice of bytes.
 		var end int
 
@@ -300,6 +293,10 @@ func (c *PuddleClient) Close(fd int) error {
 
 				// grab a random tapestry node path from zookeeper
 				client, err := c.getTapNodeConnected()
+
+				if err != nil {
+					fmt.Printf("%s\n", err)
+				}
 
 				err = client.Store(newUID.String(), dataBlock)
 
