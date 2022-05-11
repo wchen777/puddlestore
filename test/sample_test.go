@@ -3,6 +3,7 @@ package test
 import (
 	puddlestore "puddlestore/pkg"
 	"testing"
+	"time"
 )
 
 func writeFile(client puddlestore.Client, path string, offset uint64, data []byte) error {
@@ -135,6 +136,38 @@ func TestFillBlock(t *testing.T) {
 
 	exp_out := "1111111111111111111111111111111111111111111111111111111111111111111111111111"
 	if exp_out != string(out) {
+		t.Fatalf("Expected: %v, Got: %v", in, string(out))
+	}
+
+}
+
+func TestLargeBlock(t *testing.T) {
+	cluster, err := puddlestore.CreateCluster(puddlestore.DefaultConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cluster.Shutdown()
+
+	client, err := cluster.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// 64 bytes
+	in := "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+	// error here in write.
+	if err := writeFile(client, "/a", 0, []byte(in)); err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(5 * time.Second)
+
+	var out []byte
+	if out, err = readFile(client, "/a", 0, 999); err != nil {
+		t.Fatal(err)
+	}
+
+	if in != string(out) {
 		t.Fatalf("Expected: %v, Got: %v", in, string(out))
 	}
 
