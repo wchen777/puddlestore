@@ -406,6 +406,8 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 	// remember to modify the inode data stored locally on each write, flush to zookeeper on close
 
 	// get the open file
+	fmt.Printf("data write: %v\n", data)
+
 	c.Lock()
 	defer c.Unlock()
 
