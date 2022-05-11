@@ -121,9 +121,6 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-
-	fmt.Printf("open: %v %s\n", fileExists, c.fsPath+path)
-
 	var newFileinode *inode
 	data := make([]byte, 0)
 
