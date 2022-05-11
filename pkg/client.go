@@ -89,6 +89,11 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	// clean path to remove trailing dir.
 	path = strings.TrimSuffix(path, "/")
 
+	// error check empty path
+	if path == "" {
+		return -1, errors.New("empty path inputted")
+	}
+
 	// search for lock
 	lockExists, _, err := c.zkConn.Exists(LOCK_ROOT + path)
 
@@ -187,15 +192,8 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			return -1, errors.New("open: file is a directory")
 		}
 
-		// READ THE FILE DATA FROM TAPESTRY USING BLOCKS FOUND IN INODE
-		selectedNode, err := c.getRandomTapestryNode() // get tapestry node path of random node
-
-		if err != nil {
-			distlock.Release()
-			return -1, err
-		}
-
-		client, err := c.getTapestryClientFromTapNodePath(selectedNode) // return the tap node connection
+		// Connect to a tap node
+		client, err := c.getTapNodeConnected()
 
 		if err != nil {
 			distlock.Release()
@@ -262,6 +260,8 @@ func (c *PuddleClient) Close(fd int) error {
 		return errors.New("close: file not open")
 	}
 
+	defer openFile.FileLock.Release()
+
 	fmt.Println("close: ", openFile.INode.Filepath)
 
 	exists, _, _ := c.zkConn.Exists(c.fsPath + openFile.INode.Filepath)
@@ -277,27 +277,9 @@ func (c *PuddleClient) Close(fd int) error {
 		// flush the file
 
 		// grab a random tapestry node path from zookeeper
-		selectedNode, err := c.getRandomTapestryNode() // TODO: check this logic in this helper
+		client, err := c.getTapNodeConnected()
 
 		if err != nil {
-			// release lock.
-			openFile.FileLock.Release()
-
-			// close conn
-			// c.zkConn.Close()
-
-			return err
-		}
-
-		client, err := c.getTapestryClientFromTapNodePath(selectedNode)
-
-		if err != nil {
-			// release lock.
-			openFile.FileLock.Release()
-
-			// close conn
-			// c.zkConn.Close()
-
 			return err
 		}
 
@@ -327,6 +309,7 @@ func (c *PuddleClient) Close(fd int) error {
 			newUID, err := uuid.NewRandom()
 
 			if err != nil {
+				// release lock.
 				return err
 			}
 
@@ -351,7 +334,6 @@ func (c *PuddleClient) Close(fd int) error {
 		inodeBuf, err := encodeInode(*openFile.INode)
 
 		if err != nil {
-			openFile.FileLock.Release()
 			// close conn
 			// c.zkConn.Close()
 			return err
@@ -366,9 +348,6 @@ func (c *PuddleClient) Close(fd int) error {
 		delete(c.dirtyFiles, fd)
 	}
 
-	// release lock.
-	openFile.FileLock.Release()
-
 	// clear fd
 	c.openFiles[fd] = nil
 
@@ -378,7 +357,7 @@ func (c *PuddleClient) Close(fd int) error {
 // read a file and return a buffer of size `size` starting at `offset`
 func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 
-	fmt.Println("read (offset, size): ", offset, size)
+	fmt.Println("read (offset, size, fd): ", offset, size, fd)
 
 	// get open file
 	openFile := c.openFiles[fd]
@@ -764,7 +743,6 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 		return nil, err
 	}
 
-	// connects to tap belonging to inode.addr (which is addr of tap node)
 	return tapestry.Connect(tapNode.Addr)
 
 }
@@ -794,4 +772,39 @@ func (c *PuddleClient) isParentINodeDir(path string) bool {
 
 	return newFileinode.IsDir
 
+}
+
+// gets tap node and connects to it
+// tries up to 3 times if connections fail.
+func (c *PuddleClient) getTapNodeConnected() (*tapestry.Client, error) {
+	// READ THE FILE DATA FROM TAPESTRY USING BLOCKS FOUND IN INODE
+	selectedNode, err := c.getRandomTapestryNode() // get tapestry node path of random node
+
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := c.getTapestryClientFromTapNodePath(selectedNode) // return the tap node connection
+	numTried := 1
+
+	for err != nil || client == nil {
+		if numTried >= 3 {
+			return nil, err
+		} else {
+
+			// grab new rand tap node
+			selectedNode, err = c.getRandomTapestryNode() // get tapestry node path of random node
+
+			if err != nil {
+				return nil, err
+			}
+
+			client, err = c.getTapestryClientFromTapNodePath(selectedNode) // return the tap node connection
+
+			numTried += 1
+
+		}
+	}
+
+	return client, nil
 }
