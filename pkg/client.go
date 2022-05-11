@@ -330,7 +330,6 @@ func (c *PuddleClient) Close(fd int) error {
 
 		// here: done populating tap with newuids <--> blocks
 		// replace inode uids with new
-		fmt.Printf("all ids %v\n", newUIDs)
 		openFile.INode.Blocks = newUIDs
 		// // update size
 		// openFile.INode.Size = uint64(len(openFile.Data))
@@ -359,8 +358,6 @@ func (c *PuddleClient) Close(fd int) error {
 
 // read a file and return a buffer of size `size` starting at `offset`
 func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
-
-	fmt.Println("read (offset, size, fd): ", offset, size, fd)
 
 	// get open file
 	openFile := c.openFiles[fd]
