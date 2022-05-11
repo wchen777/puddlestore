@@ -3,7 +3,9 @@ package pkg
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	tapestry "tapestry/pkg"
 
@@ -689,10 +691,12 @@ func (c *PuddleClient) getINode(path string) (*inode, error) {
 // helper function that finds a random tapestry node address in /tapestry/node-xxxx,
 // and returns the address of that node.
 func (c *PuddleClient) getRandomTapestryNode() (string, error) {
-	//r := rand.New(rand.NewSource(time.Now().UnixNano())) // seed with current time
+	r := rand.New(rand.NewSource(time.Now().UnixNano())) // seed with current time
 
 	// get children of tapestry/node- to get tap nodes
 	nodes, _, err := c.zkConn.Children(c.tapestryPath)
+
+	fmt.Printf("nodes %v\n", nodes)
 
 	if err != nil {
 		fmt.Println("error getting children of tapestry/node-" + err.Error())
@@ -700,9 +704,9 @@ func (c *PuddleClient) getRandomTapestryNode() (string, error) {
 	}
 
 	// select random node to connect to
-	//randNum := r.Intn(len(nodes))
+	randNum := r.Intn(len(nodes))
 
-	selectedNode := nodes[0]
+	selectedNode := nodes[randNum]
 
 	return c.tapestryPath + "/" + selectedNode, nil // TODO: do we need to append tapestry path here? yes
 }
