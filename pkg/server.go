@@ -145,6 +145,51 @@ func (s *PuddleStoreServerInstance) ClientWrite(ctx context.Context, wm *WriteMe
 }
 
 /*
+	deletegate to the client's mkdir function
+*/
+func (s *PuddleStoreServerInstance) ClientMkdir(ctx context.Context, mdm *MkdirMessage) (*Success, error) {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+
+	client := *s.Clients[mdm.ClientId.Id]
+
+	err := client.Mkdir(mdm.Path)
+
+	return &Success{
+		Ok: err == nil, // if err is nil, then success is true
+	}, err
+}
+
+func (s *PuddleStoreServerInstance) ClientRemove(ctx context.Context, rmd *RemoveMessage) (*Success, error) {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+
+	client := *s.Clients[rmd.ClientId.Id]
+
+	err := client.Remove(rmd.Path)
+
+	return &Success{
+		Ok: err == nil, // if err is nil, then success is true
+	}, err
+}
+
+func (s *PuddleStoreServerInstance) ClientList(ctx context.Context, lmd *ListMessage) (*ListResponse, error) {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+
+	client := *s.Clients[lmd.ClientId.Id]
+
+	files, err := client.List(lmd.Path)
+
+	return &ListResponse{
+		Success: &Success{
+			Ok: err == nil, // if err is nil, then success is true
+		},
+		Result: files,
+	}, err
+}
+
+/*
 
 
    rpc ClientConnect(Empty) returns (ClientID);
