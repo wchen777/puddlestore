@@ -7,6 +7,8 @@ import (
 )
 
 type PuddleStoreServerInstance struct {
+	UnimplementedPuddleStoreServer // for forwards compatability
+
 	Mutex   sync.Mutex         // server mutex
 	Addr    net.Addr           // addr of server
 	Cluster *Cluster           // the puddlestore cluster
@@ -36,7 +38,7 @@ func (s *PuddleStoreServerInstance) InitCluster() error {
 	When a client connects, we callthe cluster's create client function,
 	and store the client within the server's clients map.
 */
-func (s *PuddleStoreServerInstance) ClientConnect(ctx context.Context) (*ClientID, error) {
+func (s *PuddleStoreServerInstance) ClientConnect(ctx context.Context, e *Empty) (*ClientID, error) {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
@@ -57,7 +59,7 @@ func (s *PuddleStoreServerInstance) ClientConnect(ctx context.Context) (*ClientI
 /*
 	delegate to the client's exit function
 */
-func (s *PuddleStoreServerInstance) ClientExit(ctx context.Context, ID *ClientID) *Success {
+func (s *PuddleStoreServerInstance) ClientExit(ctx context.Context, ID *ClientID) (*Success, error) {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
@@ -69,7 +71,7 @@ func (s *PuddleStoreServerInstance) ClientExit(ctx context.Context, ID *ClientID
 
 	return &Success{
 		Ok: true,
-	}
+	}, nil
 
 }
 
