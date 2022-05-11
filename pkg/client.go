@@ -191,6 +191,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 		// Connect to a tap node
 		client, err := c.getTapNodeConnected()
+		fmt.Printf("client in open: %v", client)
 
 		if err != nil {
 			distlock.Release()
