@@ -16,9 +16,6 @@ import (
 )
 
 // Client is a puddlestore client interface that will communicate with puddlestore nodes
-
-// each block is 4096 bytes.(4kb)
-const BLOCK_SIZE = 4096
 const MAX_RETRIES = 3
 
 type Client interface {
@@ -94,6 +91,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 	// clean path to remove trailing dir.
 	path = strings.TrimSuffix(path, "/")
+	fmt.Printf("write open first %v\n", write)
 
 	// error check empty path
 	if path == "" {
@@ -196,21 +194,25 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 		// Connect to a tap node
 		client, err := c.getTapNodeConnected()
-		fmt.Printf("client in open: %v", client)
-		fmt.Printf("released %s\n", err)
 
 		if err != nil {
 			distlock.Release()
 			return -1, err
 		}
 
+		fmt.Printf("here open\n")
+
 		data = make([]byte, newFileinode.Size) // create buffer to store file data
-		writePtr := 0                          // write pointer
+
+		// null terminate for reading
+		memset.Memset(data, 0)
+
+		writePtr := 0 // write pointer
 
 		// get the file data from tapestry, loop through block uuids and get the data from tapestry
 		for _, blockUUID := range newFileinode.Blocks {
 			blockData, err := client.Get(blockUUID.String())
-
+			fmt.Printf("got \n")
 			if err != nil {
 				distlock.Release()
 				return -1, err
@@ -225,15 +227,16 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	}
 
 	// get next client file descriptor
+	c.Lock()
 	fd := c.findNextFreeFD()
 
 	if fd == -1 { // if there are no free file descriptors, return error
 		distlock.Release()
+		c.Unlock()
 		return -1, errors.New("no free file descriptors, ENOMEM")
 	}
 
 	// add the file to the open files list
-	c.Lock()
 	c.openFiles[fd] = &OpenFile{
 		INode:    newFileinode,
 		Data:     data,
@@ -244,6 +247,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 	// if we have specified write, add fd to dirty files (to be flushed on close)
 	if write {
+		fmt.Printf("client: %s, fd %d\n", c.ID, fd)
 		c.dirtyFiles[fd] = true
 	}
 	c.Unlock()
@@ -256,40 +260,45 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 func (c *PuddleClient) Close(fd int) error {
 
 	// open file
+
 	c.Lock()
+	defer c.Unlock()
+
 	openFile := c.openFiles[fd]
-	c.Unlock()
 
 	if openFile == nil {
 		return errors.New("close: file not open")
 	}
 
 	defer openFile.FileLock.Release()
-
-	c.Lock()
 	dirtyFileBool := c.dirtyFiles[fd]
-	c.Unlock()
 
 	// check dirty files set
 	if dirtyFileBool {
 		// flush the file
 
 		// keeps track of end of array to get correct slice of bytes.
-		var end int
+		var end uint64
 
 		// keeps track of new uuids
 		var newUIDs []uuid.UUID
-		for i := 0; i < len(openFile.Data); i += BLOCK_SIZE {
+
+		// create buffer of block size.
+		var newData []byte = make([]byte, BLOCK_SIZE)
+
+		// length of curr data.
+		dataLength := uint64(len(openFile.Data))
+
+		for i := uint64(0); i < dataLength; i += BLOCK_SIZE {
 
 			end += BLOCK_SIZE
 
-			// prevents slice beyond boundary.
-			if end > len(openFile.Data) {
-				end = len(openFile.Data)
-			}
+			memset.Memset(newData, 0)
 
-			// new 4kb data
-			dataBlock := openFile.Data[i:end]
+			if end > dataLength {
+				end = dataLength
+			}
+			newData = openFile.Data[i:end]
 
 			// create new uuid, store into tapestry uuid associated with block
 			newUID, err := uuid.NewRandom()
@@ -309,7 +318,7 @@ func (c *PuddleClient) Close(fd int) error {
 					fmt.Printf("replicas: %s\n", err)
 				} else {
 					// if connected success, store.
-					err = client.Store(newUID.String(), dataBlock)
+					err = client.Store(newUID.String(), newData)
 
 					if err != nil {
 						fmt.Printf("error store: %s\n", err)
@@ -335,23 +344,24 @@ func (c *PuddleClient) Close(fd int) error {
 			return err
 		}
 
-		fmt.Println("close zk path: " + c.fsPath + openFile.INode.Filepath)
+		fmt.Println("close zk path: \n" + c.fsPath + openFile.INode.Filepath)
 
 		// write back the inode in zookeeper
 		c.zkConn.Set(c.fsPath+openFile.INode.Filepath, inodeBuf, -1)
 
-		// remove the file from the dirty files set
-		c.Lock()
+		fmt.Println("set path\n" + c.fsPath + openFile.INode.Filepath)
+
 		delete(c.dirtyFiles, fd)
 
-		// clear fd
-		c.openFiles[fd] = nil
-		c.Unlock()
-	}
-	c.Lock()
-	c.openFiles[fd] = nil
-	c.Unlock()
+		fmt.Println("delete files\n" + c.fsPath + openFile.INode.Filepath)
 
+	}
+	fmt.Printf("fd %d\n", fd)
+
+	// set openfile to nonexistent, can't use same fd.
+	c.openFiles[fd] = &OpenFile{nil, nil, nil}
+
+	fmt.Printf("returning close\n")
 	return nil
 }
 
@@ -623,8 +633,6 @@ func (c *PuddleClient) GetID() string {
 func (c *PuddleClient) findNextFreeFD() int {
 
 	// look through the open files array, find first empty index
-	c.Lock()
-	defer c.Unlock()
 	for i, f := range c.openFiles {
 		if f == nil {
 			return i
@@ -717,8 +725,6 @@ func (c *PuddleClient) getRandomTapestryNode(triedIndices []int) (string, []int,
 	// get children of tapestry/node- to get tap nodes
 	nodes, _, err := c.zkConn.Children(c.tapestryPath)
 
-	fmt.Printf("nodes %v\n", nodes)
-
 	if err != nil {
 		fmt.Println("error getting children of tapestry/node-" + err.Error())
 		return "", triedIndices, err
@@ -768,8 +774,15 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 		return nil, err
 	}
 
-	// if not empty id, return connect client.
 	if tapNode.TapCli != nil {
+		// check if node is online, if not return errr
+		_, err = tapNode.TapCli.Lookup("check")
+
+		// if test lookup fails, return error.
+		if err != nil {
+			return nil, err
+		}
+
 		return tapNode.TapCli, nil
 	} else {
 		client, err := tapestry.Connect(tapNode.Addr)
