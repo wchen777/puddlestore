@@ -108,8 +108,7 @@ func CreateCluster(config Config) (*Cluster, error) {
 
 		// encode tap node
 		Tapinode := &TapestryAddrNode{
-			Addr:   node.tap.Node.Address, // contains tap address to connect to
-			TapCli: nil,                   // stores created client.
+			Addr: node.tap.Node.Address, // contains tap address to connect to
 		}
 
 		// encode a inode with tap node address.
