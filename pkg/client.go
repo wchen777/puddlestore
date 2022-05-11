@@ -355,8 +355,9 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 
 	// get open file
 	c.Lock()
+	defer c.Unlock()
+
 	openFile := c.openFiles[fd]
-	c.Unlock()
 
 	// print out all of open file
 	// fmt.Printf("read, open file data: %v", openFile)
@@ -393,13 +394,13 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 
 	// get the open file
 	c.Lock()
+	defer c.Unlock()
+
 	openFile := c.openFiles[fd]
 
 	if openFile == nil || !c.dirtyFiles[fd] {
-		c.Unlock()
 		return errors.New("write: file not open or not opened for writing")
 	}
-	c.Unlock()
 
 	endPos := offset + uint64(len(data)) // the final position of the data to be written
 
@@ -428,7 +429,6 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 	// 	half := append(data, openFile.Data[endPos:]...)         // second half of the newly modified file
 	// 	openFile.Data = append(openFile.Data[:offset], half...) // is there a more efficient way to do this?
 	// }
-
 	return nil
 }
 
