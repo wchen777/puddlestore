@@ -72,10 +72,10 @@ type OpenFile struct {
 }
 
 type PuddleClient struct {
-	ID        string
-	zkConn    *zk.Conn
-	openFiles []*OpenFile // map from file descriptor to inode, represented as an array of inodes (each fd is an index in the array)
-	// lock states field here, best way to store read and write locks associated with an inode?
+	ID          string
+	zkConn      *zk.Conn
+	openFiles   []*OpenFile // map from file descriptor to inode, represented as an array of inodes (each fd is an index in the array)
+	numReplicas int
 
 	fsPath       string // file system path prefix within zookeeper, e.g. /puddlestore
 	tapestryPath string // path root for tapestry nodes assigned to each client, e.g. /tapestry
@@ -265,13 +265,6 @@ func (c *PuddleClient) Close(fd int) error {
 	if c.dirtyFiles[fd] {
 		// flush the file
 
-		// grab a random tapestry node path from zookeeper
-		client, err := c.getTapNodeConnected()
-
-		if err != nil {
-			return err
-		}
-
 		// keeps track of end of array to get correct slice of bytes.
 		var end int
 
@@ -297,12 +290,22 @@ func (c *PuddleClient) Close(fd int) error {
 				return err
 			}
 
-			// fmt.Printf("stored %s\n", dataBlock)
+			// store replicated datablocks.
+			for i := 0; i < c.numReplicas; i++ {
 
-			err = client.Store(newUID.String(), dataBlock)
-			if err != nil {
-				fmt.Printf("%s\n", err)
-				return err
+				// grab a random tapestry node path from zookeeper
+				client, err := c.getTapNodeConnected()
+
+				if err != nil {
+					fmt.Printf("%s\n", err)
+				}
+
+				err = client.Store(newUID.String(), dataBlock)
+
+				if err != nil {
+					fmt.Printf("%s\n", err)
+				}
+
 			}
 
 			// add to array of newuids to replace old in inode.

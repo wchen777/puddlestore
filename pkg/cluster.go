@@ -49,10 +49,10 @@ func (c *Cluster) NewClient() (Client, error) {
 	clientID := uuid.New()
 
 	client := &PuddleClient{
-		ID:     clientID.String(),
-		zkConn: conn,
-		fsPath: FS_ROOT,
-		// locksPath:    LOCK_ROOT,
+		ID:           clientID.String(),
+		zkConn:       conn,
+		fsPath:       FS_ROOT,
+		numReplicas:  c.config.NumReplicas,
 		tapestryPath: TAP_ADDRESS_ROOT,
 
 		openFiles:  make([]*OpenFile, CLIENT_OPEN_FILES_LIMIT),
