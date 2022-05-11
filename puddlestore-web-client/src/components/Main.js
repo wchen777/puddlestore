@@ -40,8 +40,11 @@ import './Main.css';
 const client = new PuddleStoreClient('http://localhost:3334'); // connects to the envoy proxy
 
 export default function Main() {
-  const [connected, setConnected] = useState(false);
-  const [clientData, setClientData] = useState({});
+  const [connected, setConnected] = useState(false); // is the client connected to the server?
+  const [clientData, setClientData] = useState({}); // client data, such as client ID
+  const [openFDs, setFDs] = useState([]); // open file descriptors
+  const [commandHistory, setCommandHistory] = useState([]); // command history
+
   const [error, setError] = useState(null);
 
   const connectToPuddleStore = () => {
@@ -71,6 +74,170 @@ export default function Main() {
     });
   };
 
+  const openRequestPuddleStore = ({ filepath, create, write }) => {
+    client.clientOpen(
+      new OpenMessage([clientData.clientID, filepath, create, write]),
+      {},
+      (err, openResp) => {
+        if (err) {
+          console.log(err);
+          setError(err.toString());
+          onOpen(); // open error modal
+        } else {
+          console.log('open response', openResp);
+          setFDs([...openFDs, { fd: openResp.getFd(), filepath: filepath }]);
+        }
+      }
+    );
+  };
+
+  const closeRequestPuddleStore = ({ fd }) => {
+    client.clientClose(
+      new CloseMessage([clientData.clientID, fd]),
+      {},
+      (err, _) => {
+        if (err) {
+          console.log(err);
+          setError(err.toString());
+          onOpen(); // open error modal
+        } else {
+          setFDs(openFDs.filter(file => file.fd !== fd));
+        }
+      }
+    );
+  };
+
+  const readRequestPuddleStore = ({ fd, offset, size }) => {
+    client.clientRead(
+      new ReadMessage([clientData.clientID, fd, offset, size]),
+      {},
+      (err, readResp) => {
+        if (err) {
+          console.log(err);
+          setError(err.toString());
+          onOpen(); // open error modal
+        } else {
+          console.log('read response', readResp);
+
+          // handle read response here!!
+          /* steps:
+            - create new command result component
+            - containing: data from command, and result of command
+          */
+          setCommandHistory([
+            ...commandHistory,
+            {
+              command: 'read',
+              argString: `fd: ${fd}, offset: ${offset}, size: ${size}`,
+              result: readResp.getData().toString(),
+            },
+          ]);
+        }
+      }
+    );
+  };
+
+  const writeRequestPuddleStore = ({ fd, data, offset }) => {
+    client.clientWrite(
+      new WriteMessage([clientData.clientID, fd, data, offset]),
+      {},
+      (err, _) => {
+        if (err) {
+          console.log(err);
+          setError(err.toString());
+          onOpen(); // open error modal
+        } else {
+          // create a component on success
+          setCommandHistory([
+            ...commandHistory,
+            {
+              command: 'write',
+              argString: `fd: ${fd}, data: ${data}, offset: ${offset}`,
+              result: 'success',
+            },
+          ]);
+        }
+      }
+    );
+  };
+
+  const mkdirRequestPuddleStore = ({ path }) => {
+    client.clientMkdir(
+      new MkdirMessage([clientData.clientID, path]),
+      {},
+      (err, _) => {
+        if (err) {
+          console.log(err);
+          setError(err.toString());
+          onOpen(); // open error modal
+        } else {
+          // create a component on success
+          setCommandHistory([
+            ...commandHistory,
+            {
+              command: 'mkdir',
+              argString: `path: ${path}`,
+              result: 'success',
+            },
+          ]);
+        }
+      }
+    );
+  };
+
+  const removeRequestPuddleStore = ({ path }) => {
+    client.clientRemove(
+      new RemoveMessage([clientData.clientID, path]),
+      {},
+      (err, _) => {
+        if (err) {
+          console.log(err);
+          setError(err.toString());
+          onOpen(); // open error modal
+        } else {
+          // create a component on success
+          setCommandHistory([
+            ...commandHistory,
+            {
+              command: 'remove',
+              argString: `path: ${path}`,
+              result: 'success',
+            },
+          ]);
+        }
+      }
+    );
+  };
+
+  const listRequestPuddleStore = ({ path }) => {
+    client.clientList(
+      new ListMessage([clientData.clientID, path]),
+      {},
+      (err, listResp) => {
+        if (err) {
+          console.log(err);
+          setError(err.toString());
+          onOpen(); // open error modal
+        } else {
+          console.log('list response', listResp);
+          // handle list response here!!
+          /* steps:
+                    - create new command result component
+                    - containing: data from command, and result of command
+                */
+          setCommandHistory([
+            ...commandHistory,
+            {
+              command: 'list',
+              argString: `path: ${path}`,
+              result: listResp.getData().toString(),
+            },
+          ]);
+        }
+      }
+    );
+  };
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef();
 
@@ -87,15 +254,19 @@ export default function Main() {
       )}
 
       {connected && (
-        <Button
-          colorScheme="purple"
-          onClick={() => disconnectFromPuddleStore()}
-          size="lg"
-        >
-          Exit PuddleStore{'\n'}
-          (Remember to click this! Puddlestore server does not remove clients
-          automatically yet)
-        </Button>
+        <HStack spacing={5}>
+          <Button
+            colorScheme="purple"
+            onClick={() => disconnectFromPuddleStore()}
+            size="lg"
+          >
+            Exit PuddleStore
+          </Button>
+          <Text fontSize="xl">
+            (REMEMBER TO CLICK THIS BUTTON! <br />
+            Puddlestore server does not remove clients automatically yet.)
+          </Text>
+        </HStack>
       )}
 
       {/* <HStack spacing={4}>
