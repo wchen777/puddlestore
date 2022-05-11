@@ -773,6 +773,7 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 
 	// if not empty id, return connect client.
 	if tapNode.TapCli != nil {
+		fmt.Printf("grabbed created tap client\n")
 		return tapNode.TapCli, nil
 	} else {
 		client, err := tapestry.Connect(tapNode.Addr)
