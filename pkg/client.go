@@ -396,6 +396,7 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 	openFile := c.openFiles[fd]
 
 	if openFile == nil || !c.dirtyFiles[fd] {
+		c.Unlock()
 		return errors.New("write: file not open or not opened for writing")
 	}
 	c.Unlock()
@@ -621,12 +622,12 @@ func (c *PuddleClient) findNextFreeFD() int {
 
 	// look through the open files array, find first empty index
 	c.Lock()
+	defer c.Unlock()
 	for i, f := range c.openFiles {
 		if f == nil {
 			return i
 		}
 	}
-	c.Unlock()
 
 	// if no empty index return -1 (MAX OPEN FILES IS 256, SHOULD WE HAVE A LIMIT? TODO: ask about this)
 	return -1
