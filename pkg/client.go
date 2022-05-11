@@ -349,9 +349,10 @@ func (c *PuddleClient) Close(fd int) error {
 		fmt.Println("delete files\n" + c.fsPath + openFile.INode.Filepath)
 
 	}
-	fmt.Println("fd\n", fd)
+	fmt.Printf("fd %d\n", fd)
 	c.openFiles[fd] = nil
 
+	fmt.Printf("returning close\n")
 	return nil
 }
 
