@@ -18,7 +18,7 @@ import (
 
 // each block is 4096 bytes.(4kb)
 const BLOCK_SIZE = 4096
-const MAX_RETRIES = 5
+const MAX_RETRIES = 3
 
 type Client interface {
 	// `Open` opens a file and returns a file descriptor. If the `create` is true and the
@@ -693,7 +693,7 @@ func (c *PuddleClient) getINode(path string) (*inode, error) {
 
 // helper function that finds a random tapestry node address in /tapestry/node-xxxx,
 // and returns the address of that node.
-func (c *PuddleClient) getRandomTapestryNode() (string, error) {
+func (c *PuddleClient) getRandomTapestryNode(triedIndices []int) (string, []int, error) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano())) // seed with current time
 
 	// get children of tapestry/node- to get tap nodes
@@ -703,15 +703,35 @@ func (c *PuddleClient) getRandomTapestryNode() (string, error) {
 
 	if err != nil {
 		fmt.Println("error getting children of tapestry/node-" + err.Error())
-		return "", err
+		return "", triedIndices, err
 	}
 
 	// select random node to connect to
 	randNum := r.Intn(len(nodes))
 
+	// keeps getting randNum until we get one not tried already,
+	for contains(triedIndices, randNum) {
+
+		randNum = r.Intn(len(nodes))
+
+	}
+
+	// once we tried this index, we add it to used indices.
+	triedIndices = append(triedIndices, randNum)
+
 	selectedNode := nodes[randNum]
 
-	return c.tapestryPath + "/" + selectedNode, nil // TODO: do we need to append tapestry path here? yes
+	return c.tapestryPath + "/" + selectedNode, triedIndices, nil // TODO: do we need to append tapestry path here? yes
+}
+
+// checks if rand int is contained already.
+func contains(indices []int, rand int) bool {
+	for _, idx := range indices {
+		if idx == rand {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapestry.Client, error) {
@@ -765,7 +785,9 @@ func (c *PuddleClient) isParentINodeDir(path string) bool {
 // tries up to 3 times if connections fail.
 func (c *PuddleClient) getTapNodeConnected() (*tapestry.Client, error) {
 	// READ THE FILE DATA FROM TAPESTRY USING BLOCKS FOUND IN INODE
-	selectedNode, err := c.getRandomTapestryNode() // get tapestry node path of random node
+	var triedIndices []int
+
+	selectedNode, triedIndices, err := c.getRandomTapestryNode(triedIndices) // get tapestry node path of random node
 
 	if err != nil {
 		return nil, err
@@ -780,7 +802,7 @@ func (c *PuddleClient) getTapNodeConnected() (*tapestry.Client, error) {
 		} else {
 
 			// grab new rand tap node
-			selectedNode, err = c.getRandomTapestryNode() // get tapestry node path of random node
+			selectedNode, triedIndices, err = c.getRandomTapestryNode(triedIndices) // get tapestry node path of random node
 
 			if err != nil {
 				return nil, err
