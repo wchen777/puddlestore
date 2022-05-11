@@ -346,6 +346,9 @@ func (c *PuddleClient) Close(fd int) error {
 		c.openFiles[fd] = nil
 		c.Unlock()
 	}
+	c.Lock()
+	c.openFiles[fd] = nil
+	c.Unlock()
 
 	return nil
 }
@@ -366,7 +369,7 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 		return nil, errors.New("read: file not open")
 	}
 
-	if offset >= openFile.INode.Size || openFile.INode.Size == 0 {
+	if offset >= openFile.INode.Size || openFile.INode.Size == 0 || size == 0 {
 		return []byte{}, nil
 	}
 
@@ -420,15 +423,8 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 	// overwrite offset -> offset + len(data) with the new data
 	copy(newData[offset:], data)
 
-	openFile.Data = newData
+	openFile.Data = newData // set the new data
 
-	// if endPos >= openFile.INode.Size { // if the end of the write is at or beyond the end of the file
-	// 	openFile.Data = append(openFile.Data[:offset], data...) // overwrite everything past the end
-	// 	openFile.INode.Size = endPos                            // update the size of the file
-	// } else { // otherwise we have a chunk of file leftover that we need to append, no need to update size
-	// 	half := append(data, openFile.Data[endPos:]...)         // second half of the newly modified file
-	// 	openFile.Data = append(openFile.Data[:offset], half...) // is there a more efficient way to do this?
-	// }
 	return nil
 }
 
@@ -633,11 +629,6 @@ func (c *PuddleClient) findNextFreeFD() int {
 	return -1
 
 }
-
-// helper function to return the tap addr from a client node, eg /tapestry/CLIENTUUID
-// func (c *PuddleClient) getFullTapestryAddrPath() string {
-// 	return c.tapestryPath +  c.ID
-// }
 
 // takes in children of directory we are removing
 // if file: acquire lock and remove
