@@ -20,7 +20,7 @@ const LOCK_ROOT = "/locks"
 const FS_ROOT = "/puddlestore"
 const TAP_ADDRESS_ROOT = "/tapestry"
 
-const CLIENT_OPEN_FILES_LIMIT = 256
+const CLIENT_OPEN_FILES_LIMIT = 2048
 const SEED = 4444
 
 var BLOCK_SIZE uint64 // will be overwritten by config file.

@@ -212,7 +212,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		// get the file data from tapestry, loop through block uuids and get the data from tapestry
 		for _, blockUUID := range newFileinode.Blocks {
 			blockData, err := client.Get(blockUUID.String())
-			fmt.Printf("got \n")
+
 			if err != nil {
 				distlock.Release()
 				return -1, err
@@ -355,11 +355,11 @@ func (c *PuddleClient) Close(fd int) error {
 
 		fmt.Println("delete files\n" + c.fsPath + openFile.INode.Filepath)
 
-	}
-	fmt.Printf("fd %d\n", fd)
+		fmt.Printf("fd %d\n", fd)
 
-	// set openfile to nonexistent, can't use same fd.
-	c.openFiles[fd] = &OpenFile{nil, nil, nil}
+		// set openfile to nonexistent, can't use same fd.
+		c.openFiles[fd] = &OpenFile{nil, nil, nil}
+	}
 
 	fmt.Printf("returning close\n")
 	return nil
