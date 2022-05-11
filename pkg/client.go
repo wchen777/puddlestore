@@ -298,6 +298,9 @@ func (c *PuddleClient) Close(fd int) error {
 			// store replicated datablocks.
 			for i := 0; i < c.numReplicas; i++ {
 
+				// grab a random tapestry node path from zookeeper
+				client, err := c.getTapNodeConnected()
+
 				err = client.Store(newUID.String(), dataBlock)
 
 				if err != nil {
