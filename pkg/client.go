@@ -3,9 +3,7 @@ package pkg
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 	"strings"
-	"time"
 
 	tapestry "tapestry/pkg"
 
@@ -127,7 +125,6 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	if !fileExists { // if the file metadata does not exist in the zookeeper fs
 
 		if !create { // if we are not creating and the file does not exist, return error
-			fmt.Printf("open: doesn't exist\n")
 			distlock.Release()
 			return -1, zk.ErrNoNode
 		} else { // otherwise create the file
@@ -260,16 +257,6 @@ func (c *PuddleClient) Close(fd int) error {
 
 	defer openFile.FileLock.Release()
 
-	fmt.Println("close: ", openFile.INode.Filepath)
-
-	exists, _, _ := c.zkConn.Exists(c.fsPath + openFile.INode.Filepath)
-
-	if exists {
-		fmt.Println("close path exists in zookeeper")
-	} else {
-		fmt.Println("close path does not exist in zookeeper")
-	}
-
 	// check dirty files set
 	if c.dirtyFiles[fd] {
 		// flush the file
@@ -287,8 +274,6 @@ func (c *PuddleClient) Close(fd int) error {
 		// keeps track of new uuids
 		var newUIDs []uuid.UUID
 		for i := 0; i < len(openFile.Data); i += BLOCK_SIZE {
-
-			fmt.Printf("here\n")
 
 			end += BLOCK_SIZE
 
@@ -315,8 +300,6 @@ func (c *PuddleClient) Close(fd int) error {
 				fmt.Printf("%s\n", err)
 				return err
 			}
-
-			fmt.Printf("id %s\n", newUID)
 
 			// add to array of newuids to replace old in inode.
 			newUIDs = append(newUIDs, newUID)
@@ -386,8 +369,6 @@ func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 
 // write a file and write `data` starting at `offset`
 func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
-
-	fmt.Println("write (offset, data len): ", offset, len(data))
 
 	// remember to modify the inode data stored locally on each write, flush to zookeeper on close
 
@@ -561,8 +542,6 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 		return nil, err
 	}
 
-	fmt.Printf("List One here %s\n", (c.fsPath + path))
-
 	var output []string
 	if exists {
 
@@ -592,13 +571,9 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 			output = append(output, path[strings.LastIndex(path, "/")+1:])
 		}
 
-		fmt.Printf("output list t%v\n", output)
-
 		return output, nil
 
 	} else {
-
-		fmt.Printf("List Two ERROR here\n")
 
 		return output, errors.New("List returned nothing")
 	}
@@ -714,7 +689,7 @@ func (c *PuddleClient) getINode(path string) (*inode, error) {
 // helper function that finds a random tapestry node address in /tapestry/node-xxxx,
 // and returns the address of that node.
 func (c *PuddleClient) getRandomTapestryNode() (string, error) {
-	r := rand.New(rand.NewSource(time.Now().UnixNano())) // seed with current time
+	//r := rand.New(rand.NewSource(time.Now().UnixNano())) // seed with current time
 
 	// get children of tapestry/node- to get tap nodes
 	nodes, _, err := c.zkConn.Children(c.tapestryPath)
@@ -724,14 +699,10 @@ func (c *PuddleClient) getRandomTapestryNode() (string, error) {
 		return "", err
 	}
 
-	fmt.Println("tap nodes in get random tap node: ", nodes)
-
 	// select random node to connect to
-	randNum := r.Intn(len(nodes))
-	fmt.Printf("random number %d", randNum)
-	selectedNode := nodes[randNum]
+	//randNum := r.Intn(len(nodes))
 
-	fmt.Println("selected node path: ", selectedNode)
+	selectedNode := nodes[0]
 
 	return c.tapestryPath + "/" + selectedNode, nil // TODO: do we need to append tapestry path here? yes
 }
@@ -752,7 +723,6 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 		return nil, err
 	}
 
-	fmt.Printf("tap addr: %s\n", tapNode.Addr)
 	return tapestry.Connect(tapNode.Addr)
 
 }
