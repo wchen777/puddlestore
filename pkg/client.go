@@ -16,9 +16,6 @@ import (
 )
 
 // Client is a puddlestore client interface that will communicate with puddlestore nodes
-
-// each block is 4096 bytes.(4kb)
-const BLOCK_SIZE = 4096
 const MAX_RETRIES = 3
 
 type Client interface {
@@ -201,7 +198,6 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			return -1, err
 		}
 
-		fmt.Printf("connected\n")
 		data = make([]byte, newFileinode.Size) // create buffer to store file data
 
 		// null terminate for reading
@@ -212,8 +208,6 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		// get the file data from tapestry, loop through block uuids and get the data from tapestry
 		for _, blockUUID := range newFileinode.Blocks {
 			blockData, err := client.Get(blockUUID.String())
-			fmt.Printf("%s\n", blockData)
-
 			if err != nil {
 				distlock.Release()
 				return -1, err
@@ -279,17 +273,18 @@ func (c *PuddleClient) Close(fd int) error {
 		// flush the file
 
 		// keeps track of end of array to get correct slice of bytes.
-		var end int
+		var end uint64
 
 		// keeps track of new uuids
 		var newUIDs []uuid.UUID
-		for i := 0; i < len(openFile.Data); i += BLOCK_SIZE {
+		dataLength := uint64(len(openFile.Data))
+		for i := uint64(0); i < dataLength; i += BLOCK_SIZE {
 
 			end += BLOCK_SIZE
 
 			// prevents slice beyond boundary.
-			if end > len(openFile.Data) {
-				end = len(openFile.Data)
+			if end > dataLength {
+				end = dataLength
 			}
 
 			// new 4kb data

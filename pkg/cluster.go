@@ -23,6 +23,8 @@ const TAP_ADDRESS_ROOT = "/tapestry"
 const CLIENT_OPEN_FILES_LIMIT = 256
 const SEED = 4444
 
+var BLOCK_SIZE uint64 // will be overwritten by config file.
+
 // TODO: HASHING FUNCTION FOR LOAD BALANCING, consistent hashing, round robin, etc.
 func (c *Cluster) HashClientIDToTapNode(clientID string) *Tapestry {
 
@@ -71,6 +73,8 @@ func CreateCluster(config Config) (*Cluster, error) {
 
 	// try and establish a new connection
 	conn, err := ConnectZk(config.ZkAddr)
+
+	BLOCK_SIZE = config.BlockSize
 
 	if err != nil {
 		return nil, err
