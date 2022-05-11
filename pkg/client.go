@@ -210,7 +210,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		// get the file data from tapestry, loop through block uuids and get the data from tapestry
 		for _, blockUUID := range newFileinode.Blocks {
 			blockData, err := client.Get(blockUUID.String())
-			fmt.Printf("got %s\n", blockData)
+
 			if err != nil {
 				distlock.Release()
 				return -1, err
