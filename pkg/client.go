@@ -277,18 +277,23 @@ func (c *PuddleClient) Close(fd int) error {
 
 		// keeps track of new uuids
 		var newUIDs []uuid.UUID
+
+		// create buffer of block size.
+		var newData []byte = make([]byte, BLOCK_SIZE)
+
+		// length of curr data.
 		dataLength := uint64(len(openFile.Data))
+
 		for i := uint64(0); i < dataLength; i += BLOCK_SIZE {
 
 			end += BLOCK_SIZE
 
-			// prevents slice beyond boundary.
+			memset.Memset(newData, 0)
+
 			if end > dataLength {
 				end = dataLength
 			}
-
-			// new 4kb data
-			newData := openFile.Data[i:end]
+			newData = openFile.Data[i:end]
 
 			// create new uuid, store into tapestry uuid associated with block
 			newUID, err := uuid.NewRandom()
@@ -303,9 +308,6 @@ func (c *PuddleClient) Close(fd int) error {
 
 				// grab a random tapestry node path from zookeeper
 				client, err := c.getTapNodeConnected()
-
-				// test if this stops program.
-				memset.Memset(newData, 0)
 
 				if err != nil {
 					fmt.Printf("replicas: %s\n", err)
