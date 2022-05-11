@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 
 	tapestry "tapestry/pkg"
@@ -75,10 +76,12 @@ type PuddleClient struct {
 	openFiles   []*OpenFile // map from file descriptor to inode, represented as an array of inodes (each fd is an index in the array)
 	numReplicas int
 
-	fsPath       string // file system path prefix within zookeeper, e.g. /puddlestore
-	tapestryPath string // path root for tapestry nodes assigned to each client, e.g. /tapestry
+	fsPath       string       // file system path prefix within zookeeper, e.g. /puddlestore
+	tapestryPath string       // path root for tapestry nodes assigned to each client, e.g. /tapestry
+	dirtyFiles   map[int]bool // dirty files set ? for flushing, should contain file descriptors (or file paths)?
 
-	dirtyFiles map[int]bool // dirty files set ? for flushing, should contain file descriptors (or file paths)?
+	// A single mutex to be used by both goroutines
+	sync.Mutex // used when locking maps for editing.
 
 }
 
@@ -228,6 +231,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	}
 
 	// add the file to the open files list
+	c.Lock()
 	c.openFiles[fd] = &OpenFile{
 		INode:    newFileinode,
 		Data:     data,
@@ -240,6 +244,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	if write {
 		c.dirtyFiles[fd] = true
 	}
+	c.Unlock()
 
 	return fd, nil
 
@@ -249,7 +254,9 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 func (c *PuddleClient) Close(fd int) error {
 
 	// open file
+	c.Lock()
 	openFile := c.openFiles[fd]
+	c.Unlock()
 
 	if openFile == nil {
 		return errors.New("close: file not open")
@@ -257,8 +264,12 @@ func (c *PuddleClient) Close(fd int) error {
 
 	defer openFile.FileLock.Release()
 
+	c.Lock()
+	dirtyFileBool := c.dirtyFiles[fd]
+	c.Unlock()
+
 	// check dirty files set
-	if c.dirtyFiles[fd] {
+	if dirtyFileBool {
 		// flush the file
 
 		// keeps track of end of array to get correct slice of bytes.
@@ -328,10 +339,12 @@ func (c *PuddleClient) Close(fd int) error {
 		c.zkConn.Set(c.fsPath+openFile.INode.Filepath, inodeBuf, -1)
 
 		// remove the file from the dirty files set
+		c.Lock()
 		delete(c.dirtyFiles, fd)
 
 		// clear fd
 		c.openFiles[fd] = nil
+		c.Unlock()
 	}
 
 	return nil
@@ -341,7 +354,9 @@ func (c *PuddleClient) Close(fd int) error {
 func (c *PuddleClient) Read(fd int, offset, size uint64) ([]byte, error) {
 
 	// get open file
+	c.Lock()
 	openFile := c.openFiles[fd]
+	c.Unlock()
 
 	// print out all of open file
 	// fmt.Printf("read, open file data: %v", openFile)
@@ -377,11 +392,13 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 	// remember to modify the inode data stored locally on each write, flush to zookeeper on close
 
 	// get the open file
+	c.Lock()
 	openFile := c.openFiles[fd]
 
 	if openFile == nil || !c.dirtyFiles[fd] {
 		return errors.New("write: file not open or not opened for writing")
 	}
+	c.Unlock()
 
 	endPos := offset + uint64(len(data)) // the final position of the data to be written
 
@@ -586,11 +603,13 @@ func (c *PuddleClient) List(path string) ([]string, error) { // TODO: zk paths e
 // release zk connection
 func (c *PuddleClient) Exit() {
 	// close all file descriptors
+	c.Lock()
 	for i, openFile := range c.openFiles {
 		if openFile != nil {
 			c.Close(i)
 		}
 	}
+	c.Unlock()
 
 	// close zk connection
 	c.zkConn.Close()
@@ -601,11 +620,13 @@ func (c *PuddleClient) Exit() {
 func (c *PuddleClient) findNextFreeFD() int {
 
 	// look through the open files array, find first empty index
+	c.Lock()
 	for i, f := range c.openFiles {
 		if f == nil {
 			return i
 		}
 	}
+	c.Unlock()
 
 	// if no empty index return -1 (MAX OPEN FILES IS 256, SHOULD WE HAVE A LIMIT? TODO: ask about this)
 	return -1
