@@ -172,6 +172,11 @@ func (c *Cluster) Shutdown() {
 	time.Sleep(time.Second)
 }
 
+// return the list of tap nodes (for testing downing tap nodes)
+func (c *Cluster) GetTapestryNodes() []*Tapestry {
+	return c.nodes
+}
+
 // initializes the zookeeper internal file system and locks directory paths
 func initPaths(c *zk.Conn) error {
 
