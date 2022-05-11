@@ -18,7 +18,7 @@ import (
 
 // each block is 4096 bytes.(4kb)
 const BLOCK_SIZE = 4096
-const MAX_RETRIES = 10
+const MAX_RETRIES = 5
 
 type Client interface {
 	// `Open` opens a file and returns a file descriptor. If the `create` is true and the
