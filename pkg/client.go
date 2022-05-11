@@ -192,15 +192,8 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			return -1, errors.New("open: file is a directory")
 		}
 
-		// READ THE FILE DATA FROM TAPESTRY USING BLOCKS FOUND IN INODE
-		selectedNode, err := c.getRandomTapestryNode() // get tapestry node path of random node
-
-		if err != nil {
-			distlock.Release()
-			return -1, err
-		}
-
-		client, err := c.getTapestryClientFromTapNodePath(selectedNode) // return the tap node connection
+		// Connect to a tap node
+		client, err := c.getTapNodeConnected()
 
 		if err != nil {
 			distlock.Release()
@@ -284,19 +277,9 @@ func (c *PuddleClient) Close(fd int) error {
 		// flush the file
 
 		// grab a random tapestry node path from zookeeper
-		selectedNode, err := c.getRandomTapestryNode() // TODO: check this logic in this helper
+		client, err := c.getTapNodeConnected()
 
 		if err != nil {
-			// release lock.
-
-			return err
-		}
-
-		client, err := c.getTapestryClientFromTapNodePath(selectedNode)
-
-		if err != nil {
-			// release lock.
-
 			return err
 		}
 
@@ -773,19 +756,7 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 		return nil, err
 	}
 
-	// try up to 3 times to connect
-	client, err := tapestry.Connect(tapNode.Addr)
-	numRetries := 1
-
-	for client == nil || err != nil {
-		if numRetries == 3 {
-			return nil, err
-		}
-		client, err = tapestry.Connect(tapNode.Addr)
-		numRetries += 1
-	}
-
-	return client, nil
+	return tapestry.Connect(tapNode.Addr)
 
 }
 
@@ -814,4 +785,39 @@ func (c *PuddleClient) isParentINodeDir(path string) bool {
 
 	return newFileinode.IsDir
 
+}
+
+// gets tap node and connects to it
+// tries up to 3 times if connections fail.
+func (c *PuddleClient) getTapNodeConnected() (*tapestry.Client, error) {
+	// READ THE FILE DATA FROM TAPESTRY USING BLOCKS FOUND IN INODE
+	selectedNode, err := c.getRandomTapestryNode() // get tapestry node path of random node
+
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := c.getTapestryClientFromTapNodePath(selectedNode) // return the tap node connection
+	numTried := 1
+
+	for err != nil || client == nil {
+		if numTried >= 3 {
+			return nil, err
+		} else {
+
+			// grab new rand tap node
+			selectedNode, err = c.getRandomTapestryNode() // get tapestry node path of random node
+
+			if err != nil {
+				return nil, err
+			}
+
+			client, err = c.getTapestryClientFromTapNodePath(selectedNode) // return the tap node connection
+
+			numTried += 1
+
+		}
+	}
+
+	return client, nil
 }
