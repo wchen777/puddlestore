@@ -340,13 +340,13 @@ func (c *PuddleClient) Close(fd int) error {
 					err = client.Store(newUID, newData)
 					fmt.Printf("clien: %s, %s\n", client.ID, newUID)
 
-					// store in tried ids so we don't store it again here.
-					triedIds = append(triedIds, client.ID)
-
 					if err != nil {
 						fmt.Printf("error store: %s\n", err)
 					}
 				}
+
+				// store in tried ids so we don't store it again here.
+				triedIds = append(triedIds, client.ID)
 
 			}
 
@@ -776,9 +776,11 @@ func (c *PuddleClient) getRandomTapestryNode(triedIds []string) (string, []strin
 	}
 
 	var nodeID = tapNode.Id
+	fmt.Printf("tried id %s, node id %s\n", triedIds, nodeID)
 
 	// keeps getting randNum until we get one not tried already,
 	for contains(triedIds, nodeID) {
+		fmt.Printf("tried id %s, node id %s\n", triedIds, nodeID)
 
 		randNum = r.Intn(len(nodes))
 
