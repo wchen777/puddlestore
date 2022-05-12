@@ -9,6 +9,9 @@ import (
 	uuid "github.com/google/uuid"
 )
 
+// Client is a puddlestore client interface that will communicate with puddlestore nodes
+var MAX_RETRIES = 3
+
 // Cluster is an interface for all nodes in a puddlestore cluster. One should be able to shutdown
 // this cluster and create a client for this cluster
 type Cluster struct {
@@ -61,6 +64,8 @@ func (c *Cluster) NewClient() (Client, error) {
 func (c *Cluster) NewClientTest(maxFiles int) (Client, error) {
 	// try and establish a new connection
 	conn, err := ConnectZk(c.config.ZkAddr)
+
+	MAX_RETRIES = c.config.NumReplicas - 2 + 1
 
 	if err != nil {
 		return nil, err

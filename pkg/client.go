@@ -15,9 +15,6 @@ import (
 	"github.com/tmthrgd/go-memset"
 )
 
-// Client is a puddlestore client interface that will communicate with puddlestore nodes
-const MAX_RETRIES = 5
-
 var ROUND_ROBIN = 0
 
 type Client interface {
@@ -112,9 +109,9 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		c.zkConn.Create(LOCK_ROOT+path, []byte(""), 0, zk.WorldACL(zk.PermAll))
 	}
 
-	// distlock := CreateDistLock(LOCK_ROOT+path, c.zkConn)
+	distlock := CreateDistLock(LOCK_ROOT+path, c.zkConn)
 
-	// distlock.Acquire()
+	distlock.Acquire()
 
 	// search for the file path metadata in zookeeper once we get lock.
 	fileExists, _, err := c.zkConn.Exists(c.fsPath + path)
@@ -128,7 +125,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	if !fileExists { // if the file metadata does not exist in the zookeeper fs
 
 		if !create { // if we are not creating and the file does not exist, return error
-			//distlock.Release()
+			distlock.Release()
 			return -1, zk.ErrNoNode
 		} else { // otherwise create the file
 
@@ -136,7 +133,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			parentNodeIsDir := c.isParentINodeDir(path)
 
 			if !parentNodeIsDir {
-				//distlock.Release()
+				distlock.Release()
 				return -1, errors.New("open: parent is not a directory")
 			}
 
@@ -162,7 +159,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 			if err != nil { // create fails
 				// release the lock
-				//distlock.Release()
+				distlock.Release()
 				return -1, err
 			}
 		}
@@ -173,7 +170,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		inodeBuf, _, err := c.zkConn.Get(c.fsPath + path)
 
 		if err != nil {
-			//distlock.Release()
+			distlock.Release()
 			return -1, err
 		}
 
@@ -181,13 +178,13 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		newFileinode, err = decodeInode(inodeBuf) // contains existing inode data
 
 		if err != nil {
-			//distlock.Release()
+			distlock.Release()
 			return -1, err
 		}
 
 		// if the file is a directory, return error
 		if newFileinode.IsDir {
-			//distlock.Release()
+			distlock.Release()
 			return -1, errors.New("open: file is a directory")
 		}
 
@@ -200,7 +197,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		client, err = c.getTapNodeConnected(notNeeded)
 
 		if err != nil {
-			//distlock.Release()
+			distlock.Release()
 			return -1, err
 		}
 
@@ -238,7 +235,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 			}
 
 			if err != nil {
-				//distlock.Release()
+				distlock.Release()
 				return -1, err
 			}
 
@@ -255,7 +252,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	fd := c.findNextFreeFD()
 
 	if fd == -1 { // if there are no free file descriptors, return error
-		//distlock.Release()
+		distlock.Release()
 		c.Unlock()
 		return -1, errors.New("no free file descriptors, ENOMEM")
 	}
@@ -264,7 +261,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 	c.openFiles[fd] = &OpenFile{
 		INode:    newFileinode,
 		Data:     data,
-		FileLock: nil,
+		FileLock: distlock,
 	}
 
 	// fmt.Println("open: open file data: ", c.openFiles[fd].Data)
@@ -294,7 +291,7 @@ func (c *PuddleClient) Close(fd int) error {
 		return errors.New("close: file not open")
 	}
 
-	//defer openFile.FileLock.Release()
+	defer openFile.FileLock.Release()
 	dirtyFileBool := c.dirtyFiles[fd]
 
 	// check dirty files set
