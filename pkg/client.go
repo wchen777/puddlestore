@@ -211,13 +211,13 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 		writePtr := 0 // write pointer
 
-		// block data to hold.
-		var blockData []byte
-
 		// get the file data from tapestry, loop through block uuids and get the data from tapestry
 		for _, blockUUID := range newFileinode.Blocks {
 
 			numTried := 0
+
+			// block of data we will use to store kv.
+			var blockData []byte
 
 			var err error
 
