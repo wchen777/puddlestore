@@ -780,6 +780,10 @@ func (c *PuddleClient) getRandomTapestryNode(triedIds []string) (string, []strin
 	// get children of tapestry/node- to get tap nodes
 	nodes, _, err := c.zkConn.Children(c.tapestryPath)
 
+	if len(nodes) == 0 {
+		return "", nil, errors.New("no tap nodes")
+	}
+
 	if err != nil {
 		fmt.Println("error getting children of tapestry/node-" + err.Error())
 		return "", triedIds, err
