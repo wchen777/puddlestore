@@ -40,12 +40,12 @@ func TestReadWrite(t *testing.T) {
 
 	in := "test"
 	// error here in write.
-	if err := writeFile(client, "/a", 0, []byte(in)); err != nil {
+	if err := writeFile(client, "/b", 0, []byte(in)); err != nil {
 		t.Fatal(err)
 	}
 
 	var out []byte
-	if out, err = readFile(client, "/a", 0, 5); err != nil {
+	if out, err = readFile(client, "/b", 0, 5); err != nil {
 		t.Fatal(err)
 	}
 
@@ -60,11 +60,11 @@ func TestReadWrite(t *testing.T) {
 
 	in = "one"
 	// error here in write.
-	if err := writeFile(client2, "/a", 4, []byte(in)); err != nil {
+	if err := writeFile(client2, "/b", 4, []byte(in)); err != nil {
 		t.Fatal(err)
 	}
 
-	if out, err = readFile(client2, "/a", 0, 10); err != nil {
+	if out, err = readFile(client2, "/b", 0, 10); err != nil {
 		t.Fatal(err)
 	}
 
@@ -80,11 +80,11 @@ func TestReadWrite(t *testing.T) {
 
 	in = "two"
 	// error here in write.
-	if err := writeFile(client3, "/a", 7, []byte(in)); err != nil {
+	if err := writeFile(client3, "/b", 7, []byte(in)); err != nil {
 		t.Fatal(err)
 	}
 
-	if out, err = readFile(client3, "/a", 0, 14); err != nil {
+	if out, err = readFile(client3, "/b", 0, 14); err != nil {
 		t.Fatal(err)
 	}
 
