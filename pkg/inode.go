@@ -18,18 +18,3 @@ type inode struct {
 	Blocks   []uuid.UUID
 	IsDir    bool // determines if inode is a directory or file.
 }
-
-// returns the path of the file
-func (i inode) GetFilePath() string {
-	return i.Filepath
-}
-
-// returns the size of the file (in bytes)
-func (i inode) GetFileSize() uint64 {
-	return i.Size
-}
-
-// returns the blocks of the file
-func (i inode) GetBlocks() []uuid.UUID {
-	return i.Blocks
-}

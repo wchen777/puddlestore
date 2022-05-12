@@ -31,6 +31,12 @@ Please refer to the Zookeeper lab for more detailed setup instructions.
 
 Document your tests, known bugs, and extra features here.
 
+### Tests
+
+To run test suite:
+`go test ./test -coverpkg ./pkg/... -coverprofile=coverage.out` to test coverage on just `pkg`, then `go tool cover -html=coverage.out` to check coverage.
+
+
 ### How to Run Web Client
 
 1. Switch to `web-client` branch
