@@ -1,9 +1,6 @@
 package pkg
 
-import (
-	uuid "github.com/google/uuid"
-	// tapestry "tapestry/pkg"
-)
+// tapestry "tapestry/pkg"
 
 // INODES:
 /*
@@ -15,7 +12,7 @@ import (
 type inode struct {
 	Filepath string // this is the filepath with respect to the actual file system (not the zookeeper file system)
 	Size     uint64
-	Blocks   []uuid.UUID
+	Blocks   []string
 	IsDir    bool // determines if inode is a directory or file.
 }
 
@@ -30,6 +27,6 @@ func (i inode) GetFileSize() uint64 {
 }
 
 // returns the blocks of the file
-func (i inode) GetBlocks() []uuid.UUID {
+func (i inode) GetBlocks() []string {
 	return i.Blocks
 }

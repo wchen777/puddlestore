@@ -14,6 +14,7 @@ type Tapestry struct {
 }
 
 type TapestryAddrNode struct {
+	Id     string
 	Addr   string
 	TapCli *tapestry.Client
 }

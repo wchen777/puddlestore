@@ -112,6 +112,7 @@ func CreateCluster(config Config) (*Cluster, error) {
 
 		// encode tap node
 		Tapinode := &TapestryAddrNode{
+			Id:     node.tap.Node.ID.String(),
 			Addr:   node.tap.Node.Address, // contains tap address to connect to
 			TapCli: nil,
 		}
@@ -182,10 +183,10 @@ func initPaths(c *zk.Conn) error {
 
 	// create the inode
 	newFileinode := &inode{
-		Filepath: FS_ROOT,              // this is the path of the file in the actual filesystem
-		Size:     0,                    // this is the size of the file in bytes (starts as empty)
-		Blocks:   make([]uuid.UUID, 0), // this is the list of data blocks (each block is a uuid that represents an entry in tapestry)
-		IsDir:    true,                 // this is the flag that indicates if the file is a directory
+		Filepath: FS_ROOT,           // this is the path of the file in the actual filesystem
+		Size:     0,                 // this is the size of the file in bytes (starts as empty)
+		Blocks:   make([]string, 0), // this is the list of data blocks (each block is a uuid that represents an entry in tapestry)
+		IsDir:    true,              // this is the flag that indicates if the file is a directory
 	}
 
 	// marshal the inode to bytes

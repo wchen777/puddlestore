@@ -1,7 +1,6 @@
 package test
 
 import (
-	"math/rand"
 	puddlestore "puddlestore/pkg"
 	"testing"
 )
@@ -47,8 +46,7 @@ func TestKill1in5(t *testing.T) {
 
 	// kill one node
 	// get random num from 0 to 4
-	ind := rand.Intn(5)
-	cluster.GetTapestryNodes()[ind].GracefulExit()
+	cluster.GetTapestryNodes()[2].GracefulExit()
 
 	// reopen the file
 	fd1, err := client.Open("/test0", false, true)
@@ -73,7 +71,7 @@ func TestKill1in5(t *testing.T) {
 func TestKill2in5(t *testing.T) {
 	cluster, err := puddlestore.CreateCluster(puddlestore.Config{
 		BlockSize:   8,
-		NumReplicas: 2,
+		NumReplicas: 5,
 		NumTapestry: 5,
 		ZkAddr:      "localhost:2181", // restore to localhost:2181 before submitting
 	})
@@ -111,7 +109,7 @@ func TestKill2in5(t *testing.T) {
 
 	// kill two nodes
 	cluster.GetTapestryNodes()[0].GracefulExit()
-	cluster.GetTapestryNodes()[1].GracefulExit()
+	cluster.GetTapestryNodes()[2].GracefulExit()
 
 	// reopen the file
 	fd1, err := client.Open("/test0", false, true)
@@ -174,7 +172,7 @@ func TestKill2in5OneReplica(t *testing.T) {
 
 	// kill two nodes
 	cluster.GetTapestryNodes()[0].GracefulExit()
-	cluster.GetTapestryNodes()[1].GracefulExit()
+	cluster.GetTapestryNodes()[3].GracefulExit()
 
 	// reopen the file
 	fd1, err := client.Open("/test0", false, true)
