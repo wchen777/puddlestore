@@ -131,22 +131,22 @@ func (d *DistLock) Release() (err error) {
 	return d.zkConn.Delete(d.path, -1)
 }
 
-// grab a read lock
-func (d *DistLock) RLock() (err error) {
-	return nil
-}
+// // grab a read lock
+// func (d *DistLock) RLock() (err error) {
+// 	return nil
+// }
 
-// grab a write lock
-func (d *DistLock) WLock() (err error) {
-	return nil
-}
+// // grab a write lock
+// func (d *DistLock) WLock() (err error) {
+// 	return nil
+// }
 
-// unlock read lock
-func (d *DistLock) RUnlock() (err error) {
-	return nil
-}
+// // unlock read lock
+// func (d *DistLock) RUnlock() (err error) {
+// 	return nil
+// }
 
-// unlock write lock
-func (d *DistLock) WUnlock() (err error) {
-	return nil
-}
+// // unlock write lock
+// func (d *DistLock) WUnlock() (err error) {
+// 	return nil
+// }
