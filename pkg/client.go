@@ -335,9 +335,7 @@ func (c *PuddleClient) Close(fd int) error {
 			for alreadyReplicated < c.numReplicas && numTries < MAX_RETRIES {
 
 				// grab a random tapestry node path from zookeeper
-				fmt.Printf("before get tap\n")
 				client, err := c.getTapNodeConnected(triedIds)
-				fmt.Printf("after get tap %s\n", client.ID)
 
 				if err != nil {
 					fmt.Printf("replicas: %s\n", err)
@@ -368,7 +366,6 @@ func (c *PuddleClient) Close(fd int) error {
 						// if not already stored in this node, store.
 						if !alreadyStored {
 							err = client.Store(newUID, newData)
-							fmt.Printf("clien: %s, %s\n", client.ID, newUID)
 
 							if err != nil {
 								fmt.Printf("error store: %s\n", err)
