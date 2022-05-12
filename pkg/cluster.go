@@ -25,19 +25,8 @@ const SEED = 4444
 
 var BLOCK_SIZE uint64 // will be overwritten by config file.
 
-// TODO: HASHING FUNCTION FOR LOAD BALANCING, consistent hashing, round robin, etc.
-func (c *Cluster) HashClientIDToTapNode(clientID string) *Tapestry {
-
-	return c.nodes[0] // PLACEHOLDER
-}
-
 // NewClient creates a new Puddlestore client
 func (c *Cluster) NewClient() (Client, error) {
-	// TODO: Return a new PuddleStore Client that implements the Client interface
-	// todo pt2: we should be listing out ALL tapestry clients
-	// tapestry/node-01-addr
-	// tapestry/node-02-addr
-	// when a client connects, we select from these tap clients with load balencing
 	// each client isn't strictly assigned a tap node, we simply just use these tap clients for accessing data
 	// see ed post #649 + fault tolerence section in gearup.
 
@@ -58,6 +47,35 @@ func (c *Cluster) NewClient() (Client, error) {
 		tapestryPath: TAP_ADDRESS_ROOT,
 
 		openFiles:  make([]*OpenFile, CLIENT_OPEN_FILES_LIMIT),
+		dirtyFiles: make(map[int]bool),
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// FOR TESTING, ADJUST PARAMETERS AS NECESSARY
+func (c *Cluster) NewClientTest(maxFiles int) (Client, error) {
+	// try and establish a new connection
+	conn, err := ConnectZk(c.config.ZkAddr)
+
+	if err != nil {
+		return nil, err
+	}
+
+	clientID := uuid.New()
+
+	client := &PuddleClient{
+		ID:           clientID.String(),
+		zkConn:       conn,
+		fsPath:       FS_ROOT,
+		numReplicas:  c.config.NumReplicas,
+		tapestryPath: TAP_ADDRESS_ROOT,
+
+		openFiles:  make([]*OpenFile, maxFiles), // adjust max open files to be small
 		dirtyFiles: make(map[int]bool),
 	}
 
