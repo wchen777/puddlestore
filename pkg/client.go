@@ -338,7 +338,7 @@ func (c *PuddleClient) Close(fd int) error {
 					// if connected success, store.
 
 					err = client.Store(newUID, newData)
-					fmt.Printf("%s\n", newUID)
+					fmt.Printf("clien: %s, %s\n", client.ID, newUID)
 
 					// store in tried ids so we don't store it again here.
 					triedIds = append(triedIds, client.ID)
