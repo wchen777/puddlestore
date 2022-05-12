@@ -328,7 +328,9 @@ func (c *PuddleClient) Close(fd int) error {
 
 			// store replicated datablocks.
 			alreadyReplicated := 0
-			for alreadyReplicated < c.numReplicas {
+			numTries := 0
+
+			for alreadyReplicated < c.numReplicas && numTries < MAX_RETRIES {
 
 				// grab a random tapestry node path from zookeeper
 				client, err := c.getTapNodeConnected(triedIds)
@@ -375,6 +377,7 @@ func (c *PuddleClient) Close(fd int) error {
 
 				// store in tried ids so we don't store it again here.
 				triedIds = append(triedIds, client.ID)
+				numTries += 1
 
 			}
 
