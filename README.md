@@ -27,15 +27,31 @@ docker run --rm -p 2181:2181 zookeeper
 
 Please refer to the Zookeeper lab for more detailed setup instructions.
 
-### Some expectations for using this README
-
-Document your tests, known bugs, and extra features here.
-
 ### Tests
 
 To run test suite:
 `go test ./test -coverpkg ./pkg/... -coverprofile=coverage.out` to test coverage on just `pkg`, then `go tool cover -html=coverage.out` to check coverage.
 
+- `basic_io_test.go` covers basic tests to check if clients can open and close and write to files.
+- `list_test.go` tests the client's `List()` function
+- `lock_test.go` tests the distributed locks in zookeeper
+- `mkdir_test.go` tests the client's `Mkdir()` function (along with edge cases)
+- `open_test.go` tests the client's `Open()` function (along with edge cases)
+- `read_write_test.go` tests edge cases in reading and writing to files
+- `remove_test.go` tests the client's `Remove()` function (along with edge cases)
+- `tapestry_test.go` recreates the even distribution and load balancing tests found on Gradescope, and tests overall fault tolerance
+
+### Distribution of Work
+
+Will and Mario both worked on the client interface functions and debugged them when necessary, and also both wrote numerous tests.
+
+Will worked on the web client and setting up the gRPC server.
+
+Mario worked on adding replication and load balancing to the tapestry nodes and data blocks.
+
+### Extra Features
+
+We created a web client.
 
 ### How to Run Web Client
 
@@ -43,7 +59,7 @@ To run test suite:
 2. Ensure Zookeeper is running on port 2181
 3. Run the server using `go run api/main.go` from the root.
 4. Run the following command: `./grpcwebproxy-v0.15.0-osx-x86_64 --backend_addr=:3333 --server_http_debug_port 3334 --allow_all_origins --run_tls_server=false` in the root to ensure the proxy forwards connections from the client to the server.
-5. Run the client either by running `npm run start` from within the `puddlestore-web-client` directory, or opening the `index.html` in the `puddlestore-web-client-build` directory (TODO).
+5. Run the client either by running `npm run start` from within the `puddlestore-web-client` directory, or opening the `index.html` in the `puddlestore-web-client-build` directory.
 6. Have fun!
 
 ![puddlestore client](img/puddlestore%20sc.png "PuddleStore Client")
