@@ -796,12 +796,9 @@ func (c *PuddleClient) getRandomTapestryNode(triedIds []string) (string, []strin
 	}
 
 	var nodeID = tapNode.Id
-	fmt.Printf("tried id %s, node id %s\n", triedIds, nodeID)
 
 	// keeps getting randNum until we get one not tried already,
 	for contains(triedIds, nodeID) {
-		fmt.Printf("tried id %s, node id %s\n", triedIds, nodeID)
-
 		randNum = r.Intn(len(nodes))
 
 		// randomly select node
