@@ -88,7 +88,6 @@ type PuddleClient struct {
 func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 
 	// clean path to remove trailing dir.
-	fmt.Printf("here open\n")
 	path = strings.TrimSuffix(path, "/")
 	fmt.Printf("write open first %v\n", write)
 
@@ -200,7 +199,6 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 		var client *tapestry.Client
 		client, err = c.getTapNodeConnected(notNeeded)
 
-		fmt.Printf("here in openXXX\n")
 		if err != nil {
 			distlock.Release()
 			return -1, err
@@ -228,7 +226,6 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 				} else {
 					err = errors.New("client is nil")
 				}
-				fmt.Printf("here in openXXX %s\n", err)
 
 				if err == nil {
 					break
@@ -345,7 +342,6 @@ func (c *PuddleClient) Close(fd int) error {
 
 					// store in tried ids so we don't store it again here.
 					triedIds = append(triedIds, client.ID)
-					fmt.Printf("KEY: %s, DATA %v IN %s\n", newUID, newData, client.ID)
 
 					if err != nil {
 						fmt.Printf("error store: %s\n", err)
@@ -423,7 +419,6 @@ func (c *PuddleClient) Write(fd int, offset uint64, data []byte) error {
 	// remember to modify the inode data stored locally on each write, flush to zookeeper on close
 
 	// get the open file
-	fmt.Printf("data write: %v\n", data)
 
 	c.Lock()
 	defer c.Unlock()
@@ -849,8 +844,6 @@ func (c *PuddleClient) getTapNodeforStore() string {
 	} else {
 		ROUND_ROBIN = ROUND_ROBIN + 1
 	}
-
-	fmt.Printf("ROUND ROBIN %d\n", ROUND_ROBIN)
 
 	// grab node
 	var tapNode *TapestryAddrNode = new(TapestryAddrNode)
