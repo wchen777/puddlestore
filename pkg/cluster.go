@@ -65,7 +65,7 @@ func (c *Cluster) NewClientTest(maxFiles int) (Client, error) {
 	// try and establish a new connection
 	conn, err := ConnectZk(c.config.ZkAddr)
 
-	MAX_RETRIES = c.config.NumReplicas - 2 + 1
+	MAX_RETRIES = c.config.NumTapestry / 2
 
 	if err != nil {
 		return nil, err
