@@ -335,14 +335,34 @@ func (c *PuddleClient) Close(fd int) error {
 					fmt.Printf("replicas: %s\n", err)
 				} else {
 
-					// if connected success, store.
+					// if connected success and client not storing, continue, store.
+					clientsStored, err := client.Lookup(newUID)
 
-					err = client.Store(newUID, newData)
-					fmt.Printf("clien: %s, %s\n", client.ID, newUID)
-
+					// if no lookup error, check if stored, if not stored, store.
 					if err != nil {
-						fmt.Printf("error store: %s\n", err)
+						fmt.Printf("lookup error %s\n", err)
+					} else {
+
+						// check for stored clients
+						alreadyStored := false
+						for _, node := range clientsStored {
+							if node.ID == client.ID {
+								alreadyStored = true
+							}
+						}
+
+						// if not already stored in this node, store.
+						if !alreadyStored {
+							err = client.Store(newUID, newData)
+							fmt.Printf("clien: %s, %s\n", client.ID, newUID)
+
+							if err != nil {
+								fmt.Printf("error store: %s\n", err)
+							}
+						}
+
 					}
+
 				}
 
 				// store in tried ids so we don't store it again here.
