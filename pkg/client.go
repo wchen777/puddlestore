@@ -16,7 +16,7 @@ import (
 )
 
 // Client is a puddlestore client interface that will communicate with puddlestore nodes
-const MAX_RETRIES = 3
+const MAX_RETRIES = 5
 
 var ROUND_ROBIN = 0
 
