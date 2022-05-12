@@ -171,8 +171,8 @@ func TestKill2in5(t *testing.T) {
 	}
 
 	// kill two nodes
-	cluster.GetTapestryNodes()[0].GracefulExit()
 	cluster.GetTapestryNodes()[2].GracefulExit()
+	cluster.GetTapestryNodes()[4].GracefulExit()
 
 	// reopen the file
 	fd1, err := client.Open("/test0", false, true)

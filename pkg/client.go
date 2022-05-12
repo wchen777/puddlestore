@@ -333,7 +333,9 @@ func (c *PuddleClient) Close(fd int) error {
 			for alreadyReplicated < c.numReplicas && numTries < MAX_RETRIES {
 
 				// grab a random tapestry node path from zookeeper
+				fmt.Printf("before get tap\n")
 				client, err := c.getTapNodeConnected(triedIds)
+				fmt.Printf("after get tap %s\n", client.ID)
 
 				if err != nil {
 					fmt.Printf("replicas: %s\n", err)
@@ -809,7 +811,8 @@ func (c *PuddleClient) getRandomTapestryNode(triedIds []string) (string, []strin
 	var nodeID = tapNode.Id
 
 	// keeps getting randNum until we get one not tried already,
-	for contains(triedIds, nodeID) {
+	// len of triedids must not be length of nodes
+	for contains(triedIds, nodeID) && len(triedIds) < len(nodes) {
 		randNum = r.Intn(len(nodes))
 
 		// randomly select node
@@ -1007,7 +1010,9 @@ func (c *PuddleClient) isParentINodeDir(path string) bool {
 func (c *PuddleClient) getTapNodeConnected(triedIds []string) (*tapestry.Client, error) {
 	// READ THE FILE DATA FROM TAPESTRY USING BLOCKS FOUND IN INODE
 
+	fmt.Printf("befire get tap in method\n")
 	selectedNode, triedIds, err := c.getRandomTapestryNode(triedIds) // get tapestry node path of random node
+	fmt.Printf("after get tap in method\n")
 
 	if err != nil {
 		return nil, err
@@ -1022,12 +1027,19 @@ func (c *PuddleClient) getTapNodeConnected(triedIds []string) (*tapestry.Client,
 		} else {
 
 			selectedNode, triedIds, err = c.getRandomTapestryNode(triedIds) // get tapestry node path of random node
+			fmt.Printf("print tried ids %v\n", triedIds)
+			fmt.Printf("print selected %v\n", selectedNode)
 
 			if err != nil {
-				return nil, err
+				continue
 			}
 
 			client, err = c.getTapestryClientFromTapNodePath(selectedNode) // return the tap node connection
+
+			if err != nil {
+				continue
+			}
+			fmt.Printf("print client id %v\n", client.ID)
 
 			numTried += 1
 
