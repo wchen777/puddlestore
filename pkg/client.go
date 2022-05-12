@@ -1010,9 +1010,7 @@ func (c *PuddleClient) isParentINodeDir(path string) bool {
 func (c *PuddleClient) getTapNodeConnected(triedIds []string) (*tapestry.Client, error) {
 	// READ THE FILE DATA FROM TAPESTRY USING BLOCKS FOUND IN INODE
 
-	fmt.Printf("befire get tap in method\n")
 	selectedNode, triedIds, err := c.getRandomTapestryNode(triedIds) // get tapestry node path of random node
-	fmt.Printf("after get tap in method\n")
 
 	if err != nil {
 		return nil, err
@@ -1027,8 +1025,6 @@ func (c *PuddleClient) getTapNodeConnected(triedIds []string) (*tapestry.Client,
 		} else {
 
 			selectedNode, triedIds, err = c.getRandomTapestryNode(triedIds) // get tapestry node path of random node
-			fmt.Printf("print tried ids %v\n", triedIds)
-			fmt.Printf("print selected %v\n", selectedNode)
 
 			if err != nil {
 				continue
@@ -1039,7 +1035,6 @@ func (c *PuddleClient) getTapNodeConnected(triedIds []string) (*tapestry.Client,
 			if err != nil {
 				continue
 			}
-			fmt.Printf("print client id %v\n", client.ID)
 
 			numTried += 1
 
