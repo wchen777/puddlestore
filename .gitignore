@@ -5,3 +5,4 @@ raftlogs
 
 /puddlestore-web-client/node_modules
 .DS_Store
+Makefile
