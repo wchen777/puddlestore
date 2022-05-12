@@ -281,6 +281,7 @@ func (c *PuddleClient) Open(path string, create, write bool) (int, error) {
 func (c *PuddleClient) Close(fd int) error {
 
 	// open file
+	fmt.Printf("about to close %s", c.ID)
 
 	c.Lock()
 	defer c.Unlock()
