@@ -53,6 +53,8 @@ func TestOpenFileNonExistentNoCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	cluster.GetTapestryNodes() // for increasing coverage
+
 	defer cluster.Shutdown()
 
 	client, err := cluster.NewClient()
@@ -134,6 +136,30 @@ func TestOpenFileExistingDir(t *testing.T) {
 
 	if err == nil {
 		t.Fatal("should not be able to open dir")
+	}
+
+}
+
+// empty path
+func TestOpenFileEmptyPath(t *testing.T) {
+	cluster, err := puddlestore.CreateCluster(puddlestore.DefaultConfig())
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer cluster.Shutdown()
+
+	client, err := cluster.NewClient()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Open("", false, false)
+
+	if err == nil {
+		t.Fatal("should not be able to open empty path")
 	}
 
 }

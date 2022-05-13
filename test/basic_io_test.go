@@ -172,3 +172,78 @@ func TestLargeBlock(t *testing.T) {
 	}
 
 }
+
+func TestReadWriteOneTap(t *testing.T) {
+
+	time.Sleep(2 * time.Second)
+	cluster, err := puddlestore.CreateCluster(puddlestore.Config{
+		ZkAddr:      "localhost:2181",
+		BlockSize:   4,
+		NumReplicas: 1,
+		NumTapestry: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cluster.Shutdown()
+
+	client, err := cluster.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	in := "test"
+	// error here in write.
+	if err := writeFile(client, "/b", 0, []byte(in)); err != nil {
+		t.Fatal(err)
+	}
+
+	var out []byte
+	if out, err = readFile(client, "/b", 0, 5); err != nil {
+		t.Fatal(err)
+	}
+
+	if in != string(out) {
+		t.Fatalf("Expected: %v, Got: %v", in, string(out))
+	}
+
+	client2, err := cluster.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	in = "one"
+	// error here in write.
+	if err := writeFile(client2, "/b", 4, []byte(in)); err != nil {
+		t.Fatal(err)
+	}
+
+	if out, err = readFile(client2, "/b", 0, 10); err != nil {
+		t.Fatal(err)
+	}
+
+	output := "testone"
+	if output != string(out) {
+		t.Fatalf("Expected: %v, Got: %v", in, string(out))
+	}
+
+	client3, err := cluster.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	in = "two"
+	// error here in write.
+	if err := writeFile(client3, "/b", 7, []byte(in)); err != nil {
+		t.Fatal(err)
+	}
+
+	if out, err = readFile(client3, "/b", 0, 14); err != nil {
+		t.Fatal(err)
+	}
+
+	output = "testonetwo"
+	if output != string(out) {
+		t.Fatalf("Expected: %v, Got: %v", in, string(out))
+	}
+}

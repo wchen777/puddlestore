@@ -3,6 +3,7 @@ package test
 import (
 	puddlestore "puddlestore/pkg"
 	"testing"
+	"time"
 )
 
 func TestRemoveNonexist(t *testing.T) {
@@ -127,10 +128,13 @@ func TestRemoveDirWithChildren(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	time.Sleep(time.Millisecond * 500)
+
 	err = client.Mkdir("/thisisadir")
 
 	if err != nil {
-		t.Fatal("should not have errored on mkdir")
+		l, _ := client.List("/")
+		t.Fatal("should not have errored on mkdir: ", err, "listed here: ", l)
 	}
 
 	err = client.Mkdir("/thisisadir/child1")
