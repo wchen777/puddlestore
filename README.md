@@ -27,47 +27,33 @@ docker run --rm -p 2181:2181 zookeeper
 
 Please refer to the Zookeeper lab for more detailed setup instructions.
 
-<<<<<<< HEAD
-### Some expectations for using this README
-
-Document your tests, known bugs, and extra features here.
-
 
 ### Bugs + Concerns:
 
-Evenly distributed tests break, most likely due to loss of information from one replica. Some ideas we tried were checking tapestry nodes up to MAX_RETRIES to grab information, as well as more error checking. However, these EvenlyDist tests still fail. Any comments on potential issues/cases students commonly missed and solutions would be greatly appreciated!
-=======
->>>>>>> b1fe3c9cfb8f6dbaf3e6a58b4a630076c2e0aa3f
+Evenly distributed tests break, most likely due to loss of information from one replica. Some ideas we tried were checking tapestry nodes up to MAX_RETRIES to grab information, as well as more error checking. However, these EvenlyDist tests still fail. Any comments on potential issues/cases commonly missed and solutions would be greatly appreciated!
+
 ### Tests
 
 To run test suite:
 `go test ./test -coverpkg ./pkg/... -coverprofile=coverage.out` to test coverage on just `pkg`, then `go tool cover -html=coverage.out` to check coverage.
 
-<<<<<<< HEAD
-`basic_io_test.go` - contains tests that utilize multiple methods from clients, making sure all modifications are expected
-
-`list_test.go` - tests the `list` function of client. Covers cases where list prints out nothing, list, directories, etc.
-
-`lock_test.go` - tests the lock client used to maintain data consistency
-
-`mkdir_test.go` - tests the make directory function of client. Makes sure directories are not created under nonexistent directories, directories in general can be created and later used, etc.
-
-`open_test.go` - tests the open function of client. Makes sure opening a file follows the appropriate actions based off the arguments.
-
-`read_write_test.go`- tests reading/writing of files with client. We covered reading from a file when opening, as well as writing to it. 
-
-`remove_test.go` - tests removing directories/files with a client. We covered removing single files, directories, and making sure they can not be accessed in the future.
-
-`tapestry_test.go` - tests information retrieval from tap with failed nodes
-=======
 - `basic_io_test.go` covers basic tests to check if clients can open and close and write to files.
-- `list_test.go` tests the client's `List()` function
+
+- `list_test.go` tests the client's `List()` function. Covers cases where list prints out nothing, list, directories, etc.
+
 - `lock_test.go` tests the distributed locks in zookeeper
-- `mkdir_test.go` tests the client's `Mkdir()` function (along with edge cases)
-- `open_test.go` tests the client's `Open()` function (along with edge cases)
-- `read_write_test.go` tests edge cases in reading and writing to files
-- `remove_test.go` tests the client's `Remove()` function (along with edge cases)
+
+- `mkdir_test.go` tests the client's `Mkdir()` function (along with edge cases). Makes sure directories are not created under nonexistent directories, directories in general can be created and later used, etc.
+
+- `open_test.go` tests the client's `Open()` function (along with edge cases). Makes sure opening a file follows the appropriate actions based off the arguments.
+
+- `read_write_test.go` tests edge cases in reading and writing to files. We covered reading from a file when opening, as well as writing to it. 
+
+- `remove_test.go` tests the client's `Remove()` function (along with edge cases). We covered removing single files, directories, and making sure they can not be accessed in the future.
+
 - `tapestry_test.go` recreates the even distribution and load balancing tests found on Gradescope, and tests overall fault tolerance
+
+Note: `tapestry_test.go` kills nodes that make it impossible to run with other tests, so these can be individually run! 
 
 ### Distribution of Work
 
@@ -80,7 +66,6 @@ Mario worked on adding replication and load balancing to the tapestry nodes and 
 ### Extra Features
 
 We created a web client.
->>>>>>> b1fe3c9cfb8f6dbaf3e6a58b4a630076c2e0aa3f
 
 ### How to Run Web Client
 
