@@ -27,22 +27,37 @@ docker run --rm -p 2181:2181 zookeeper
 
 Please refer to the Zookeeper lab for more detailed setup instructions.
 
+
+### Bugs + Concerns:
+
+Evenly distributed tests break, most likely due to loss of information from one replica. Some ideas we tried were checking tapestry nodes up to MAX_RETRIES to grab information, as well as more error checking. However, these EvenlyDist tests still fail. Any comments on potential issues/cases commonly missed and solutions would be greatly appreciated!
+
 ### Tests
 
 To run test suite:
 `go test ./test -coverpkg ./pkg/... -coverprofile=coverage.out` to test coverage on just `pkg`, then `go tool cover -html=coverage.out` to check coverage.
 
 - `basic_io_test.go` covers basic tests to check if clients can open and close and write to files.
-- `list_test.go` tests the client's `List()` function
+
+- `list_test.go` tests the client's `List()` function. Covers cases where list prints out nothing, list, directories, etc.
+
 - `lock_test.go` tests the distributed locks in zookeeper
-  - many tests passed individually but were failing when ran with the whole suite, so we commented them out
-- `mkdir_test.go` tests the client's `Mkdir()` function (along with edge cases)
-- `open_test.go` tests the client's `Open()` function (along with edge cases)
-- `read_write_test.go` tests edge cases in reading and writing to files
-- `remove_test.go` tests the client's `Remove()` function (along with edge cases)
+  - some tests passed individually but failed when running the test suite as a whole, so we commented these out
+
+- `mkdir_test.go` tests the client's `Mkdir()` function (along with edge cases). Makes sure directories are not created under nonexistent directories, directories in general can be created and later used, etc.
+
+- `open_test.go` tests the client's `Open()` function (along with edge cases). Makes sure opening a file follows the appropriate actions based off the arguments.
+
+- `read_write_test.go` tests edge cases in reading and writing to files. We covered reading from a file when opening, as well as writing to it.
+
+- `remove_test.go` tests the client's `Remove()` function (along with edge cases). We covered removing single files, directories, and making sure they can not be accessed in the future.
+
 - `tapestry_test.go` recreates the even distribution and load balancing tests found on Gradescope, and tests overall fault tolerance
   - even distribution tests are failing on Gradescope, so we commented these out
+
 - `no_conn_test.go` tests edge cases regarding having no connections
+
+Note: `tapestry_test.go` kills nodes that make it impossible to run with other tests, so these can be individually run!
 
 ### Distribution of Work
 
