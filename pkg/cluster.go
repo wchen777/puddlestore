@@ -191,6 +191,7 @@ func (c *Cluster) Shutdown() {
 	}
 	conn.Delete(LOCK_ROOT, -1)
 
+	conn.Close()
 	time.Sleep(time.Second)
 }
 

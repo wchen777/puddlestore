@@ -503,8 +503,16 @@ func (c *PuddleClient) Mkdir(path string) error {
 
 	// check if the path already exists
 	exists, _, _ := c.zkConn.Exists(c.fsPath + path)
+	// l, _ := c.List("/")
+	// // index of the path in the list
+	// pathIndex := -1
+	// for i, p := range l {
+	// 	if p == path {
+	// 		pathIndex = i
+	// 	}
+	// } // sometimes exist returns a false positive???
 	if exists {
-		return errors.New("mkdir: path already exists")
+		return errors.New("mkdir: path already exists, " + path)
 	}
 
 	// create local inode
@@ -663,7 +671,7 @@ func (c *PuddleClient) Exit() {
 	// close all file descriptors
 	c.Lock()
 	for i, openFile := range c.openFiles {
-		if openFile != nil {
+		if openFile != nil && openFile.INode != nil {
 			c.Close(i)
 		}
 	}
@@ -788,7 +796,7 @@ func (c *PuddleClient) getRandomTapestryNode(triedIds []string) (string, []strin
 	}
 
 	if err != nil {
-		fmt.Println("error getting children of tapestry/node-" + err.Error())
+		// fmt.Println("error getting children of tapestry/node-" + err.Error())
 		return "", triedIds, err
 	}
 
@@ -802,7 +810,7 @@ func (c *PuddleClient) getRandomTapestryNode(triedIds []string) (string, []strin
 	toDecode, _, err := c.zkConn.Get(c.tapestryPath + "/" + selectedNode)
 
 	if err != nil {
-		fmt.Println("error getting filepath" + err.Error())
+		// fmt.Println("error getting filepath" + err.Error())
 		return "", triedIds, err
 	}
 
@@ -811,7 +819,7 @@ func (c *PuddleClient) getRandomTapestryNode(triedIds []string) (string, []strin
 	err = decodeMsgPack(toDecode, tapNode) // populates tapNode with addr
 
 	if err != nil {
-		fmt.Println("error decoding" + err.Error())
+		// fmt.Println("error decoding" + err.Error())
 		return "", triedIds, err
 	}
 
@@ -829,7 +837,7 @@ func (c *PuddleClient) getRandomTapestryNode(triedIds []string) (string, []strin
 		toDecode, _, err := c.zkConn.Get(c.tapestryPath + "/" + selectedNode)
 
 		if err != nil {
-			fmt.Println("error getting filepath" + err.Error())
+			// fmt.Println("error getting filepath" + err.Error())
 			return "", triedIds, err
 		}
 
@@ -838,7 +846,7 @@ func (c *PuddleClient) getRandomTapestryNode(triedIds []string) (string, []strin
 		err = decodeMsgPack(toDecode, tapNode) // populates tapNode with addr
 
 		if err != nil {
-			fmt.Println("error decoding" + err.Error())
+			// fmt.Println("error decoding" + err.Error())
 			return "", triedIds, err
 		}
 
@@ -866,7 +874,7 @@ func (c *PuddleClient) getTapNodeforStore() string {
 	nodes, _, err := c.zkConn.Children(c.tapestryPath)
 
 	if err != nil {
-		fmt.Println("error getting children of tapestry/node-" + err.Error())
+		// fmt.Println("error getting children of tapestry/node-" + err.Error())
 		return "0"
 	}
 
@@ -918,7 +926,7 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 	toDecode, _, err := c.zkConn.Get(filepath)
 
 	if err != nil {
-		fmt.Printf("here erraaa %s\n", err)
+		// fmt.Printf("here erraaa %s\n", err)
 		return nil, err
 	}
 
@@ -951,7 +959,7 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 			err = decodeMsgPack(toDecode, listedNodes) // populates tapNode with addr
 
 			if err != nil {
-				fmt.Printf("here err %s\n", err)
+				// fmt.Printf("here err %s\n", err)
 				return nil, err
 			}
 
@@ -973,7 +981,7 @@ func (c *PuddleClient) getTapestryClientFromTapNodePath(filepath string) (*tapes
 
 		// if can't connect, return err
 		if err != nil {
-			fmt.Printf("here err %s\n", err)
+			// fmt.Printf("here err %s\n", err)
 			return nil, err
 		}
 
