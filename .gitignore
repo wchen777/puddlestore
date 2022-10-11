@@ -1,6 +1,6 @@
 raftlogs
 *.out
-/tapestry
+
 
 
 /puddlestore-web-client/node_modules
